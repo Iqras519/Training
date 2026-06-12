@@ -1,9 +1,9 @@
-import { Router, type IRouter } from "express";
+import { Router } from "express";
 import { db, usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import crypto from "crypto";
 
-const router: IRouter = Router();
+const router = Router();
 
 function hashPassword(password: string): string {
   return crypto.createHash("sha256").update(password + "struturacheck_salt").digest("hex");

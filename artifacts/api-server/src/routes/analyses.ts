@@ -1,9 +1,9 @@
-import { Router, type IRouter } from "express";
+import { Router } from "express";
 import { db, analysesTable, recommendationsTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { desc } from "drizzle-orm";
 
-const router: IRouter = Router();
+const router = Router();
 
 const STRUCTURE_TYPES = ["bridge", "road", "wall", "building"];
 const SEVERITY_LEVELS = ["high", "medium", "low", "none"];

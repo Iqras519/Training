@@ -179,8 +179,84 @@ function getUserIdFromRequest(req: Request): number | null {
   }
 }
 
+function getRuleBasedRecommendations(materialType: string | null, buildingAge: number | null, severity: string) {
+  const recs: { severity: string; title: string; description: string; reasoning: string }[] = [];
+  if (!materialType) return recs;
+
+  const mat = materialType.toLowerCase();
+
+  // Rule 1: Brick + Age > 20 years
+  if (mat === "brick" && buildingAge !== null && buildingAge > 20) {
+    recs.push({
+      severity: "warning",
+      title: "Older Brick Structure Vulnerability",
+      description: "Older brick structures may be vulnerable to crack propagation and mortar washout.",
+      reasoning: "Brick structures older than 20 years undergo natural degradation of lime mortar and thermal expansion stress. This increases the risk of joint failure and structural crack propagation."
+    });
+  }
+
+  // Rule 2: Concrete + High Severity
+  if ((mat === "reinforced concrete" || mat === "concrete") && severity === "high") {
+    recs.push({
+      severity: "critical",
+      title: "Immediate Concrete Inspection Recommended",
+      description: "Immediate structural inspection recommended for high severity defect in reinforced concrete.",
+      reasoning: "High severity defects in reinforced concrete structures indicate potential structural load redistribution or rebar corrosion (spalling). Immediate physical inspection and non-destructive testing are recommended."
+    });
+  }
+
+  // Additional material-specific rules
+  if (mat === "brick" && !(buildingAge !== null && buildingAge > 20)) {
+    recs.push({
+      severity: "safe",
+      title: "Brick Masonry Maintenance",
+      description: "Standard moisture protection and efflorescence monitoring recommended.",
+      reasoning: "Brick structures require ongoing protection from water ingress. Monitor joints annually."
+    });
+  } else if ((mat === "reinforced concrete" || mat === "concrete") && severity !== "high") {
+    recs.push({
+      severity: "safe",
+      title: "Concrete Carbonation Prevention",
+      description: "Monitor concrete surface for signs of hair crack weathering.",
+      reasoning: "Check for carbonation depths or micro-cracks during routine inspections."
+    });
+  } else if (mat === "steel") {
+    const isHighOrMed = severity === "high" || severity === "medium";
+    recs.push({
+      severity: isHighOrMed ? "critical" : "safe",
+      title: isHighOrMed ? "Steel Joint Fatigue Risk" : "Steel Corrosion Prevention",
+      description: isHighOrMed 
+        ? "Inspect all critical steel connection welds and bolts for fatigue cracks." 
+        : "Verify that anti-corrosion protective coatings remain intact.",
+      reasoning: isHighOrMed
+        ? "High or medium severity defects in steel structures can lead to rapid load capacity degradation at connections. Inspection of welds and bolts is required."
+        : "Steel structures are susceptible to oxidation. Keep paint/coatings intact."
+    });
+  } else if (mat === "stone") {
+    recs.push({
+      severity: buildingAge && buildingAge > 30 ? "warning" : "safe",
+      title: "Stone Masonry Joint Stability",
+      description: buildingAge && buildingAge > 30 
+        ? "Perform tuckpointing on deteriorated mortar joints to maintain stability."
+        : "Monitor stone masonry layout for signs of differential shifting.",
+      reasoning: "Historic stone structures can shift over time. Tuckpointing is vital to seal joints and prevent water penetration."
+    });
+  } else if (mat === "composite") {
+    recs.push({
+      severity: severity === "high" ? "critical" : "safe",
+      title: severity === "high" ? "Composite Delamination Warning" : "Composite Structure Integrity",
+      description: severity === "high"
+        ? "Perform ultrasonic scanning to detect potential subsurface delamination."
+        : "Monitor composite material interfaces for localized stress fractures.",
+      reasoning: "Composites can fail internally without visible surface cracks. Ultrasonic scans are necessary for high severity defects."
+    });
+  }
+
+  return recs;
+}
+
 router.post("/analyze", async (req: Request, res: Response): Promise<void> => {
-  const { fileName, structureType, imageData } = req.body;
+  const { fileName, structureType, imageData, buildingAge, numberOfFloors, materialType } = req.body;
 
   if (!fileName || !structureType || !imageData) {
     res.status(400).json({ error: "fileName, structureType, and imageData are required" });
@@ -191,6 +267,16 @@ router.post("/analyze", async (req: Request, res: Response): Promise<void> => {
     res.status(400).json({ error: `structureType must be one of: ${STRUCTURE_TYPES.join(", ")}` });
     return;
   }
+
+  const parsedAge = (buildingAge !== undefined && buildingAge !== null && buildingAge !== "") 
+    ? parseInt(String(buildingAge), 10) 
+    : null;
+  const parsedFloors = (numberOfFloors !== undefined && numberOfFloors !== null && numberOfFloors !== "") 
+    ? parseInt(String(numberOfFloors), 10) 
+    : null;
+  const storedMaterial = (materialType !== undefined && materialType !== null && materialType !== "")
+    ? String(materialType)
+    : null;
 
   let base64Image = imageData;
   if (imageData.startsWith("data:")) {
@@ -250,9 +336,13 @@ router.post("/analyze", async (req: Request, res: Response): Promise<void> => {
         analysisSpeedMs: speedMs,
         originalImageUrl: imageData,
         defectTypes: JSON.stringify(defectTypesArr),
+        buildingAge: isNaN(parsedAge as any) ? null : parsedAge,
+        numberOfFloors: isNaN(parsedFloors as any) ? null : parsedFloors,
+        materialType: storedMaterial,
       })
       .returning();
 
+    // ML Recommendation
     if (severity !== "none" && defectTypesArr.length > 0) {
       const recSeverity = severity === "high" ? "critical" : severity === "medium" ? "warning" : "safe";
       const recTitle =
@@ -281,7 +371,30 @@ router.post("/analyze", async (req: Request, res: Response): Promise<void> => {
       });
     }
 
-    res.status(200).json({ ...analysis, createdAt: analysis.createdAt.toISOString() });
+    // Rule-based Recommendations
+    const ruleRecs = getRuleBasedRecommendations(storedMaterial, isNaN(parsedAge as any) ? null : parsedAge, severity);
+    for (const rec of ruleRecs) {
+      await db.insert(recommendationsTable).values({
+        analysisId: analysis.id,
+        severity: rec.severity,
+        title: rec.title,
+        description: rec.description,
+        reasoning: rec.reasoning,
+        workOrderGenerated: false,
+      });
+    }
+
+    // Fetch all recommendations to return to client
+    const recommendations = await db
+      .select()
+      .from(recommendationsTable)
+      .where(eq(recommendationsTable.analysisId, analysis.id));
+
+    res.status(200).json({
+      ...analysis,
+      createdAt: analysis.createdAt.toISOString(),
+      recommendations: recommendations.map((r) => ({ ...r, createdAt: r.createdAt.toISOString() })),
+    });
   } catch (error: any) {
     clearTimeout(timeoutId);
     if (error.name === "AbortError") {

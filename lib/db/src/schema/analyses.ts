@@ -17,6 +17,9 @@ export const analysesTable = pgTable("analyses", {
   maskedImageUrl: text("masked_image_url"),
   defectTypes: text("defect_types"),
   notes: text("notes"),
+  buildingAge: integer("building_age"),
+  numberOfFloors: integer("number_of_floors"),
+  materialType: text("material_type"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

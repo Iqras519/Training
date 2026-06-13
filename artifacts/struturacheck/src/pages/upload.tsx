@@ -5,6 +5,7 @@ import { generatePDFReport } from "@/lib/pdf-generator";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
@@ -32,6 +33,16 @@ interface AnalysisResult {
   confidenceScore: number | null;
   analysisSpeedMs: number | null;
   defectTypes: string | null;
+  buildingAge?: number | null;
+  numberOfFloors?: number | null;
+  materialType?: string | null;
+  recommendations?: {
+    id: number;
+    severity: string;
+    title: string;
+    description: string;
+    reasoning?: string;
+  }[];
 }
 
 const STEPS = [
@@ -62,6 +73,9 @@ export default function UploadPage() {
   const [files, setFiles] = useState<FileItem[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [structureType, setStructureType] = useState("bridge");
+  const [buildingAge, setBuildingAge] = useState("");
+  const [numberOfFloors, setNumberOfFloors] = useState("");
+  const [materialType, setMaterialType] = useState("Brick");
   const [progress, setProgress] = useState(0);
   const [currentStep, setCurrentStep] = useState(0);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -138,6 +152,9 @@ export default function UploadPage() {
           fileName,
           structureType,
           imageData,
+          buildingAge: buildingAge ? parseInt(buildingAge, 10) : null,
+          numberOfFloors: numberOfFloors ? parseInt(numberOfFloors, 10) : null,
+          materialType,
         }),
       });
 
@@ -232,22 +249,82 @@ export default function UploadPage() {
             <p className="text-xs text-muted-foreground mt-1 text-center">or click to browse • PNG, JPG, WEBP up to 10MB</p>
           </motion.div>
 
-          {/* Structure Type */}
-          <div className="flex items-center gap-3">
-            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide whitespace-nowrap">
-              Structure Type
-            </label>
-            <Select value={structureType} onValueChange={setStructureType} disabled={isAnalyzing}>
-              <SelectTrigger className="flex-1" data-testid="structure-type-select">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="bridge">Bridge</SelectItem>
-                <SelectItem value="road">Road</SelectItem>
-                <SelectItem value="wall">Wall</SelectItem>
-                <SelectItem value="building">Building</SelectItem>
-              </SelectContent>
-            </Select>
+          {/* Structural & Material Details */}
+          <div className="space-y-4 p-4 border border-border rounded-xl bg-card">
+            <h3 className="text-xs font-semibold text-foreground uppercase tracking-wide">
+              Structure & Material Details
+            </h3>
+            
+            <div className="grid grid-cols-2 gap-3">
+              {/* Structure Type */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">
+                  Structure Type
+                </label>
+                <Select value={structureType} onValueChange={setStructureType} disabled={isAnalyzing}>
+                  <SelectTrigger data-testid="structure-type-select">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="bridge">Bridge</SelectItem>
+                    <SelectItem value="road">Road</SelectItem>
+                    <SelectItem value="wall">Wall</SelectItem>
+                    <SelectItem value="building">Building</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Material Type */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">
+                  Material Type
+                </label>
+                <Select value={materialType} onValueChange={setMaterialType} disabled={isAnalyzing}>
+                  <SelectTrigger data-testid="material-type-select">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Brick">Brick</SelectItem>
+                    <SelectItem value="Reinforced Concrete">Reinforced Concrete</SelectItem>
+                    <SelectItem value="Steel">Steel</SelectItem>
+                    <SelectItem value="Stone">Stone</SelectItem>
+                    <SelectItem value="Composite">Composite</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Building Age */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">
+                  Building Age (Years)
+                </label>
+                <Input
+                  type="number"
+                  placeholder="e.g. 25"
+                  value={buildingAge}
+                  onChange={(e) => setBuildingAge(e.target.value)}
+                  disabled={isAnalyzing}
+                  className="h-9"
+                  data-testid="building-age-input"
+                />
+              </div>
+
+              {/* Number of Floors */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">
+                  Number of Floors
+                </label>
+                <Input
+                  type="number"
+                  placeholder="e.g. 5"
+                  value={numberOfFloors}
+                  onChange={(e) => setNumberOfFloors(e.target.value)}
+                  disabled={isAnalyzing}
+                  className="h-9"
+                  data-testid="number-of-floors-input"
+                />
+              </div>
+            </div>
           </div>
 
           {/* File Previews */}
@@ -410,6 +487,70 @@ export default function UploadPage() {
                         ))}
                       </div>
                     )}
+
+                    {/* Building & Material Details */}
+                    {(result.materialType || result.buildingAge || result.numberOfFloors) && (
+                      <div className="mt-4 pt-3 border-t border-border grid grid-cols-3 gap-2 text-center text-xs">
+                        {result.materialType && (
+                          <div>
+                            <div className="font-semibold text-foreground capitalize">{result.materialType}</div>
+                            <div className="text-[10px] text-muted-foreground">Material</div>
+                          </div>
+                        )}
+                        {result.buildingAge !== null && result.buildingAge !== undefined && (
+                          <div>
+                            <div className="font-semibold text-foreground">{result.buildingAge} years</div>
+                            <div className="text-[10px] text-muted-foreground">Age</div>
+                          </div>
+                        )}
+                        {result.numberOfFloors !== null && result.numberOfFloors !== undefined && (
+                          <div>
+                            <div className="font-semibold text-foreground">{result.numberOfFloors}</div>
+                            <div className="text-[10px] text-muted-foreground">Floors</div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Recommendations / Risk Insights */}
+                    {result.recommendations && result.recommendations.length > 0 && (
+                      <div className="mt-4 pt-3 border-t border-border space-y-2">
+                        <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                          Risk Insights & Actions
+                        </div>
+                        <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                          {result.recommendations.map((rec) => {
+                            const isCritical = rec.severity === "critical";
+                            const isWarning = rec.severity === "warning";
+                            return (
+                              <div
+                                key={rec.id}
+                                className={`p-2.5 rounded-lg border text-xs space-y-1 ${
+                                  isCritical
+                                    ? "bg-destructive/10 border-destructive/20 text-destructive-foreground text-left"
+                                    : isWarning
+                                      ? "bg-[hsl(38,92%,50%)]/10 border-[hsl(38,92%,50%)]/20 text-[hsl(38,92%,50%)]-foreground text-left"
+                                      : "bg-muted/30 border-border text-left"
+                                }`}
+                              >
+                                <div className="font-semibold flex items-center gap-1 text-foreground">
+                                  {isCritical || isWarning ? (
+                                    <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
+                                  ) : (
+                                    <ShieldCheck className="w-3.5 h-3.5 flex-shrink-0 text-[hsl(160,84%,39%)]" />
+                                  )}
+                                  {rec.title}
+                                </div>
+                                <div className="text-muted-foreground text-[11px] leading-relaxed">
+                                  {rec.description}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
                     <Button
                       variant="outline"
                       size="sm"

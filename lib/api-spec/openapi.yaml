@@ -352,6 +352,12 @@ components:
           description: "JSON array of defect type strings"
         notes:
           type: ["string", "null"]
+        buildingAge:
+          type: ["integer", "null"]
+        numberOfFloors:
+          type: ["integer", "null"]
+        materialType:
+          type: ["string", "null"]
         createdAt:
           type: string
 
@@ -470,6 +476,12 @@ components:
           type: integer
         confidenceScore:
           type: ["number", "null"]
+        buildingAge:
+          type: ["integer", "null"]
+        numberOfFloors:
+          type: ["integer", "null"]
+        materialType:
+          type: ["string", "null"]
         recommendations:
           type: array
           items:

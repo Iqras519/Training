@@ -362,6 +362,30 @@ export default function DashboardPage() {
                                     {analysis.severity}
                                   </span>
                                 </div>
+                                {(analysis as any).materialType && (
+                                  <div>
+                                    <span className="text-muted-foreground">Material: </span>
+                                    <span className="font-semibold text-foreground capitalize">
+                                      {(analysis as any).materialType}
+                                    </span>
+                                  </div>
+                                )}
+                                {(analysis as any).buildingAge !== null && (analysis as any).buildingAge !== undefined && (
+                                  <div>
+                                    <span className="text-muted-foreground">Age: </span>
+                                    <span className="font-semibold text-foreground">
+                                      {(analysis as any).buildingAge} yrs
+                                    </span>
+                                  </div>
+                                )}
+                                {(analysis as any).numberOfFloors !== null && (analysis as any).numberOfFloors !== undefined && (
+                                  <div>
+                                    <span className="text-muted-foreground">Floors: </span>
+                                    <span className="font-semibold text-foreground">
+                                      {(analysis as any).numberOfFloors}
+                                    </span>
+                                  </div>
+                                )}
                               </div>
                               
                               <div className="flex items-center gap-3">

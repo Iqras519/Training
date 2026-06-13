@@ -18,6 +18,9 @@ export interface PDFReportData {
     description: string;
     reasoning?: string;
   }[];
+  buildingAge?: number | null;
+  numberOfFloors?: number | null;
+  materialType?: string | null;
 }
 
 export function generatePDFReport(data: PDFReportData) {
@@ -124,9 +127,12 @@ export function generatePDFReport(data: PDFReportData) {
   y += 8;
   const colWidth = (pageWidth - 2 * margin - 6) / 2; // ~87mm
 
+  const hasBuildingInfo = !!(data.materialType || data.buildingAge || data.numberOfFloors);
+  const boxHeight = hasBuildingInfo ? 56 : 42;
+
   // Box 1: Assessment Metrics
   doc.setFillColor(lightSlate[0], lightSlate[1], lightSlate[2]);
-  doc.roundedRect(margin, y, colWidth, 42, 2, 2, "F");
+  doc.roundedRect(margin, y, colWidth, boxHeight, 2, 2, "F");
 
   doc.setTextColor(textDark[0], textDark[1], textDark[2]);
   doc.setFont("helvetica", "bold");
@@ -140,29 +146,50 @@ export function generatePDFReport(data: PDFReportData) {
   doc.text(`Structure Category:`, margin + 6, y + 16);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(textDark[0], textDark[1], textDark[2]);
-  doc.text(data.structureType.toUpperCase(), margin + colWidth - 25, y + 16);
+  doc.text(data.structureType.toUpperCase(), margin + colWidth - 6 - doc.getTextWidth(data.structureType.toUpperCase()), y + 16);
 
   doc.setFont("helvetica", "normal");
   doc.setTextColor(textMuted[0], textMuted[1], textMuted[2]);
   doc.text(`Defect Count:`, margin + 6, y + 24);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(textDark[0], textDark[1], textDark[2]);
-  doc.text(`${data.defectCount} detected`, margin + colWidth - 25, y + 24);
+  const defectsText = `${data.defectCount} detected`;
+  doc.text(defectsText, margin + colWidth - 6 - doc.getTextWidth(defectsText), y + 24);
 
   doc.setFont("helvetica", "normal");
   doc.setTextColor(textMuted[0], textMuted[1], textMuted[2]);
   doc.text(`Model Confidence:`, margin + 6, y + 32);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(textDark[0], textDark[1], textDark[2]);
+  const confText = data.confidenceScore ? `${Math.round(data.confidenceScore * 100)}%` : "N/A";
   doc.text(
-    data.confidenceScore ? `${Math.round(data.confidenceScore * 100)}%` : "N/A",
-    margin + colWidth - 25,
+    confText,
+    margin + colWidth - 6 - doc.getTextWidth(confText),
     y + 32
   );
 
+  if (data.materialType) {
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(textMuted[0], textMuted[1], textMuted[2]);
+    doc.text(`Material Type:`, margin + 6, y + 40);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(textDark[0], textDark[1], textDark[2]);
+    doc.text(data.materialType, margin + colWidth - 6 - doc.getTextWidth(data.materialType), y + 40);
+  }
+
+  if (data.numberOfFloors !== null && data.numberOfFloors !== undefined) {
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(textMuted[0], textMuted[1], textMuted[2]);
+    doc.text(`Number of Floors:`, margin + 6, y + 48);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(textDark[0], textDark[1], textDark[2]);
+    const floorsStr = String(data.numberOfFloors);
+    doc.text(floorsStr, margin + colWidth - 6 - doc.getTextWidth(floorsStr), y + 48);
+  }
+
   // Box 2: Health Rating
   doc.setFillColor(lightSlate[0], lightSlate[1], lightSlate[2]);
-  doc.roundedRect(margin + colWidth + 6, y, colWidth, 42, 2, 2, "F");
+  doc.roundedRect(margin + colWidth + 6, y, colWidth, boxHeight, 2, 2, "F");
 
   doc.setTextColor(textDark[0], textDark[1], textDark[2]);
   doc.setFont("helvetica", "bold");
@@ -180,7 +207,7 @@ export function generatePDFReport(data: PDFReportData) {
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(7);
-  doc.text(sevLabel, margin + colWidth + colWidth - 26, y + 15.5);
+  doc.text(sevLabel, margin + colWidth + colWidth - 27 + (22 - doc.getTextWidth(sevLabel)) / 2, y + 15.5);
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
@@ -188,19 +215,32 @@ export function generatePDFReport(data: PDFReportData) {
   doc.text(`Integrity Rating:`, margin + colWidth + 12, y + 24);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(textDark[0], textDark[1], textDark[2]);
-  doc.text(`${healthScore}/100`, margin + colWidth + colWidth - 18, y + 24);
+  const ratingText = `${healthScore}/100`;
+  doc.text(ratingText, margin + colWidth + colWidth - 6 - doc.getTextWidth(ratingText), y + 24);
 
   doc.setFont("helvetica", "normal");
   doc.setTextColor(textMuted[0], textMuted[1], textMuted[2]);
   doc.text(`Analysis Latency:`, margin + colWidth + 12, y + 32);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(textDark[0], textDark[1], textDark[2]);
-  doc.text(`${data.analysisSpeedMs} ms`, margin + colWidth + colWidth - 18, y + 32);
+  const latencyText = `${data.analysisSpeedMs} ms`;
+  doc.text(latencyText, margin + colWidth + colWidth - 6 - doc.getTextWidth(latencyText), y + 32);
+
+  if (data.buildingAge !== null && data.buildingAge !== undefined) {
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(textMuted[0], textMuted[1], textMuted[2]);
+    doc.text(`Building Age:`, margin + colWidth + 12, y + 40);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(textDark[0], textDark[1], textDark[2]);
+    const ageStr = `${data.buildingAge} years`;
+    doc.text(ageStr, margin + colWidth + colWidth - 6 - doc.getTextWidth(ageStr), y + 40);
+  }
+
+  y += boxHeight + 8;
 
   // -------------------------------------------------------------
   // VISUAL EVIDENCE & DEFECT DETAILS
   // -------------------------------------------------------------
-  y += 50;
 
   // Column left: Image thumbnail
   const imgWidth = 80;

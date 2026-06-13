@@ -20,6 +20,7 @@ export const analysesTable = pgTable("analyses", {
   buildingAge: integer("building_age"),
   numberOfFloors: integer("number_of_floors"),
   materialType: text("material_type"),
+  healthScore: integer("health_score"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

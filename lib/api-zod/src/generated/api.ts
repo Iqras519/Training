@@ -78,6 +78,7 @@ export const ListAnalysesResponseItem = zod.object({
   "buildingAge": zod.number().nullish(),
   "numberOfFloors": zod.number().nullish(),
   "materialType": zod.string().nullish(),
+  "healthScore": zod.number().nullish(),
   "createdAt": zod.string()
 })
 export const ListAnalysesResponse = zod.array(ListAnalysesResponseItem)
@@ -108,6 +109,7 @@ export const CreateAnalysisResponse = zod.object({
   "buildingAge": zod.number().nullish(),
   "numberOfFloors": zod.number().nullish(),
   "materialType": zod.string().nullish(),
+  "healthScore": zod.number().nullish(),
   "createdAt": zod.string()
 })
 
@@ -135,6 +137,7 @@ export const GetAnalysisResponse = zod.object({
   "buildingAge": zod.number().nullish(),
   "numberOfFloors": zod.number().nullish(),
   "materialType": zod.string().nullish(),
+  "healthScore": zod.number().nullish(),
   "createdAt": zod.string()
 })
 
@@ -259,6 +262,7 @@ export const DownloadReportResponse = zod.object({
   "buildingAge": zod.number().nullish(),
   "numberOfFloors": zod.number().nullish(),
   "materialType": zod.string().nullish(),
+  "healthScore": zod.number().nullish(),
   "recommendations": zod.array(zod.object({
   "id": zod.number(),
   "analysisId": zod.number(),

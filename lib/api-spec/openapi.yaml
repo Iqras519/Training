@@ -358,6 +358,8 @@ components:
           type: ["integer", "null"]
         materialType:
           type: ["string", "null"]
+        healthScore:
+          type: ["integer", "null"]
         createdAt:
           type: string
 
@@ -482,6 +484,8 @@ components:
           type: ["integer", "null"]
         materialType:
           type: ["string", "null"]
+        healthScore:
+          type: ["integer", "null"]
         recommendations:
           type: array
           items:

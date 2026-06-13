@@ -21,6 +21,7 @@ export interface PDFReportData {
   buildingAge?: number | null;
   numberOfFloors?: number | null;
   materialType?: string | null;
+  healthScore?: number | null;
 }
 
 export function generatePDFReport(data: PDFReportData) {
@@ -61,14 +62,23 @@ export function generatePDFReport(data: PDFReportData) {
   const sevLabel = severityLabels[data.severity] || "UNKNOWN";
 
   // Calculate Health Score
-  let healthScore = 100;
+  let calculatedHealthScore = 100;
   if (data.severity === "high") {
-    healthScore = Math.max(10, 100 - (data.defectCount || 1) * 15 - 35);
+    calculatedHealthScore = Math.max(10, 100 - (data.defectCount || 1) * 15 - 35);
   } else if (data.severity === "medium") {
-    healthScore = Math.max(45, 100 - (data.defectCount || 1) * 10 - 15);
+    calculatedHealthScore = Math.max(45, 100 - (data.defectCount || 1) * 10 - 15);
   } else if (data.severity === "low") {
-    healthScore = Math.max(75, 100 - (data.defectCount || 1) * 5 - 5);
+    calculatedHealthScore = Math.max(75, 100 - (data.defectCount || 1) * 5 - 5);
   }
+
+  const healthScore = data.healthScore !== null && data.healthScore !== undefined
+    ? data.healthScore
+    : calculatedHealthScore;
+
+  let categoryLabel = "Excellent";
+  if (healthScore < 50) categoryLabel = "Critical";
+  else if (healthScore < 70) categoryLabel = "Moderate";
+  else if (healthScore < 90) categoryLabel = "Good";
 
   // Helper: Draw Header Banner
   doc.setFillColor(darkSlate[0], darkSlate[1], darkSlate[2]);
@@ -215,7 +225,7 @@ export function generatePDFReport(data: PDFReportData) {
   doc.text(`Integrity Rating:`, margin + colWidth + 12, y + 24);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(textDark[0], textDark[1], textDark[2]);
-  const ratingText = `${healthScore}/100`;
+  const ratingText = `${healthScore}/100 (${categoryLabel})`;
   doc.text(ratingText, margin + colWidth + colWidth - 6 - doc.getTextWidth(ratingText), y + 24);
 
   doc.setFont("helvetica", "normal");

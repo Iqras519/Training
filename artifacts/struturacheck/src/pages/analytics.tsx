@@ -217,6 +217,7 @@ export default function AnalyticsPage() {
                       <th className="text-left py-2 px-2 text-xs font-medium text-muted-foreground">File</th>
                       <th className="text-left py-2 px-2 text-xs font-medium text-muted-foreground">Type</th>
                       <th className="text-left py-2 px-2 text-xs font-medium text-muted-foreground">Severity</th>
+                      <th className="text-right py-2 px-2 text-xs font-medium text-muted-foreground">Health Score</th>
                       <th className="text-right py-2 px-2 text-xs font-medium text-muted-foreground">Defects</th>
                       <th className="text-right py-2 px-2 text-xs font-medium text-muted-foreground">Confidence</th>
                       <th className="text-right py-2 px-2 text-xs font-medium text-muted-foreground">Speed</th>
@@ -238,6 +239,34 @@ export default function AnalyticsPage() {
                           <span className={`text-xs px-2 py-0.5 rounded-full border capitalize ${SEV_CLASSES[a.severity] || SEV_CLASSES.none}`}>
                             {a.severity}
                           </span>
+                        </td>
+                        <td className="py-2.5 px-2 text-right">
+                          {(a as any).healthScore !== null && (a as any).healthScore !== undefined ? (() => {
+                            const hs = (a as any).healthScore;
+                            let label = "Excellent";
+                            let dotColor = "bg-[hsl(160,84%,39%)]";
+                            let textColor = "text-[hsl(160,84%,39%)]";
+                            if (hs < 50) {
+                              label = "Critical";
+                              dotColor = "bg-destructive";
+                              textColor = "text-destructive";
+                            } else if (hs < 70) {
+                              label = "Moderate";
+                              dotColor = "bg-[hsl(38,92%,50%)]";
+                              textColor = "text-[hsl(38,92%,50%)]";
+                            } else if (hs < 90) {
+                              label = "Good";
+                              dotColor = "bg-[hsl(189,94%,43%)]";
+                              textColor = "text-[hsl(189,94%,43%)]";
+                            }
+                            return (
+                              <div className="flex items-center justify-end gap-1.5 font-medium">
+                                <span className={`w-1.5 h-1.5 rounded-full ${dotColor}`} />
+                                <span className={textColor}>{hs}</span>
+                                <span className="text-[10px] text-muted-foreground font-normal">({label})</span>
+                              </div>
+                            );
+                          })() : "—"}
                         </td>
                         <td className="py-2.5 px-2 text-right text-foreground">{a.defectCount ?? 0}</td>
                         <td className="py-2.5 px-2 text-right text-muted-foreground">

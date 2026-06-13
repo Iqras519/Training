@@ -323,6 +323,19 @@ router.post("/analyze", async (req: Request, res: Response): Promise<void> => {
 
     const userId = getUserIdFromRequest(req);
 
+    let baseScore = 100;
+    if (severity === "high") {
+      baseScore = 30;
+    } else if (severity === "medium") {
+      baseScore = 60;
+    } else if (severity === "low") {
+      baseScore = 80;
+    } else if (severity === "none") {
+      baseScore = 100;
+    }
+    const conf = confidenceScore !== null && confidenceScore !== undefined ? confidenceScore : 1.0;
+    const computedHealthScore = Math.round(baseScore * conf);
+
     const [analysis] = await db
       .insert(analysesTable)
       .values({
@@ -339,6 +352,7 @@ router.post("/analyze", async (req: Request, res: Response): Promise<void> => {
         buildingAge: isNaN(parsedAge as any) ? null : parsedAge,
         numberOfFloors: isNaN(parsedFloors as any) ? null : parsedFloors,
         materialType: storedMaterial,
+        healthScore: computedHealthScore,
       })
       .returning();
 

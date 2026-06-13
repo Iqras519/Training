@@ -36,6 +36,7 @@ interface AnalysisResult {
   buildingAge?: number | null;
   numberOfFloors?: number | null;
   materialType?: string | null;
+  healthScore?: number | null;
   recommendations?: {
     id: number;
     severity: string;
@@ -87,6 +88,14 @@ export default function UploadPage() {
 
   const createAnalysis = useCreateAnalysis();
   const deleteAnalysis = useDeleteAnalysis();
+
+  const getHealthRating = (score: number | null | undefined) => {
+    if (score === null || score === undefined) return { label: "Unknown", color: "text-muted-foreground", stroke: "stroke-muted", bg: "bg-muted/15" };
+    if (score >= 90) return { label: "Excellent", color: "text-[hsl(160,84%,39%)]", stroke: "stroke-[hsl(160,84%,39%)]", bg: "bg-[hsl(160,84%,39%)]/10" };
+    if (score >= 70) return { label: "Good", color: "text-[hsl(189,94%,43%)]", stroke: "stroke-[hsl(189,94%,43%)]", bg: "bg-[hsl(189,94%,43%)]/10" };
+    if (score >= 50) return { label: "Moderate", color: "text-[hsl(38,92%,50%)]", stroke: "stroke-[hsl(38,92%,50%)]", bg: "bg-[hsl(38,92%,50%)]/10" };
+    return { label: "Critical", color: "text-destructive", stroke: "stroke-destructive", bg: "bg-destructive/10" };
+  };
 
   const addFiles = useCallback((newFiles: File[]) => {
     const imageFiles = newFiles.filter((f) => f.type.startsWith("image/"));
@@ -452,6 +461,57 @@ export default function UploadPage() {
                     </div>
                   </CardContent>
                 </Card>
+
+                {/* Health Score Sub-card */}
+                {result.healthScore !== null && result.healthScore !== undefined && (() => {
+                  const rating = getHealthRating(result.healthScore);
+                  const radius = 24;
+                  const circumference = 2 * Math.PI * radius;
+                  const strokeDashoffset = circumference - (result.healthScore / 100) * circumference;
+                  return (
+                    <Card className="border-border bg-card">
+                      <CardContent className="p-4 flex items-center gap-4">
+                        <div className="relative flex items-center justify-center w-16 h-16 flex-shrink-0">
+                          <svg className="w-16 h-16 transform -rotate-90">
+                            <circle
+                              cx="32"
+                              cy="32"
+                              r={radius}
+                              className="stroke-muted/20"
+                              strokeWidth="4.5"
+                              fill="transparent"
+                            />
+                            <circle
+                              cx="32"
+                              cy="32"
+                              r={radius}
+                              className={rating.stroke}
+                              strokeWidth="4.5"
+                              fill="transparent"
+                              strokeDasharray={circumference}
+                              strokeDashoffset={strokeDashoffset}
+                              strokeLinecap="round"
+                            />
+                          </svg>
+                          <span className="absolute text-sm font-bold text-foreground">
+                            {result.healthScore}
+                          </span>
+                        </div>
+                        <div>
+                          <div className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">
+                            Building Health Rating
+                          </div>
+                          <div className={`text-base font-extrabold flex items-center gap-1.5 mt-0.5 ${rating.color}`}>
+                            {rating.label}
+                          </div>
+                          <p className="text-[10px] text-muted-foreground leading-relaxed mt-0.5">
+                            Integrity evaluated by structural defect severity and AI prediction confidence.
+                          </p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })()}
 
                 {/* Stats */}
                 <Card className="border-border bg-card">

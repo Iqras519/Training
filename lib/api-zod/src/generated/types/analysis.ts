@@ -38,5 +38,7 @@ export interface Analysis {
   numberOfFloors?: number | null;
   /** @nullable */
   materialType?: string | null;
+  /** @nullable */
+  healthScore?: number | null;
   createdAt: string;
 }

@@ -386,6 +386,29 @@ export default function DashboardPage() {
                                     </span>
                                   </div>
                                 )}
+                                {(analysis as any).healthScore !== null && (analysis as any).healthScore !== undefined && (() => {
+                                  const hs = (analysis as any).healthScore;
+                                  let label = "Excellent";
+                                  let color = "text-[hsl(160,84%,39%)] bg-[hsl(160,84%,39%)]/10 border-[hsl(160,84%,39%)]/30";
+                                  if (hs < 50) {
+                                    label = "Critical";
+                                    color = "text-destructive bg-destructive/10 border-destructive/30";
+                                  } else if (hs < 70) {
+                                    label = "Moderate";
+                                    color = "text-[hsl(38,92%,50%)] bg-[hsl(38,92%,50%)]/10 border-[hsl(38,92%,50%)]/30";
+                                  } else if (hs < 90) {
+                                    label = "Good";
+                                    color = "text-[hsl(189,94%,43%)] bg-[hsl(189,94%,43%)]/10 border-[hsl(189,94%,43%)]/30";
+                                  }
+                                  return (
+                                    <div>
+                                      <span className="text-muted-foreground">Health Score: </span>
+                                      <span className={`px-2 py-0.5 rounded-full border text-[10px] font-bold ${color}`}>
+                                        {hs} - {label}
+                                      </span>
+                                    </div>
+                                  );
+                                })()}
                               </div>
                               
                               <div className="flex items-center gap-3">

@@ -99,6 +99,10 @@ function ResultLocationMap({ lat, lng, buildingName, address, severity }: Result
       .bindPopup(popupContent)
       .openPopup();
 
+    setTimeout(() => {
+      map.invalidateSize();
+    }, 100);
+
     return () => {
       if (mapRef.current) {
         mapRef.current.remove();

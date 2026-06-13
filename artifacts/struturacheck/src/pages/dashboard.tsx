@@ -31,31 +31,56 @@ interface DashboardMapProps {
 function DashboardMap({ analyses }: DashboardMapProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
+  const markersGroupRef = useRef<L.LayerGroup | null>(null);
 
   const locatedAnalyses = (analyses || []).filter(
     (a) => a.latitude !== null && a.longitude !== null && a.latitude !== undefined && a.longitude !== undefined
   );
 
+  // 1. Initialize map once on mount
   useEffect(() => {
-    if (!mapContainerRef.current) return;
+    if (!mapContainerRef.current || mapRef.current) return;
 
-    // Default center to world or center around points
-    let center: [number, number] = [20, 0];
-    let zoom = 2;
-
-    if (locatedAnalyses.length > 0) {
-      const avgLat = locatedAnalyses.reduce((sum, a) => sum + Number(a.latitude), 0) / locatedAnalyses.length;
-      const avgLng = locatedAnalyses.reduce((sum, a) => sum + Number(a.longitude), 0) / locatedAnalyses.length;
-      center = [avgLat, avgLng];
-      zoom = locatedAnalyses.length === 1 ? 12 : 5;
-    }
-
-    const map = L.map(mapContainerRef.current).setView(center, zoom);
-    mapRef.current = map;
-
+    const map = L.map(mapContainerRef.current).setView([20, 0], 2);
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     }).addTo(map);
+
+    const markersGroup = L.layerGroup().addTo(map);
+    markersGroupRef.current = markersGroup;
+    mapRef.current = map;
+
+    // Force recalculation of container size after mounting to prevent gray/invisible tiles
+    setTimeout(() => {
+      map.invalidateSize();
+    }, 100);
+
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+        markersGroupRef.current = null;
+      }
+    };
+  }, []);
+
+  // 2. Update markers and view bounds dynamically
+  const locatedKey = locatedAnalyses.map((a) => `${a.id}-${a.latitude}-${a.longitude}-${a.severity}-${a.healthScore}`).join(",");
+
+  useEffect(() => {
+    const map = mapRef.current;
+    const markersGroup = markersGroupRef.current;
+    if (!map || !markersGroup) return;
+
+    markersGroup.clearLayers();
+
+    if (locatedAnalyses.length === 0) {
+      map.setView([20, 0], 2);
+      return;
+    }
+
+    const bounds = L.latLngBounds(locatedAnalyses.map(a => [Number(a.latitude), Number(a.longitude)]));
+    map.fitBounds(bounds, { maxZoom: 12, padding: [40, 40] });
 
     locatedAnalyses.forEach((a) => {
       const lat = Number(a.latitude);
@@ -118,9 +143,9 @@ function DashboardMap({ analyses }: DashboardMapProps) {
       });
 
       const popupContent = `
-        <div class="text-xs p-1 text-slate-800">
+        <div class="text-xs p-1 text-slate-800 font-sans">
           <h4 class="font-bold text-sm text-slate-900" style="margin: 0 0 2px 0;">${a.buildingName || a.fileName}</h4>
-          ${a.address ? `<p class="text-slate-600" style="margin: 0 0 4px 0;">${a.address}${a.city ? `, ${a.city}` : ""}</p>` : ""}
+          ${a.address ? `<p class="text-slate-600" style="margin: 0 0 4px 0; font-size: 10px;">${a.address}${a.city ? `, ${a.city}` : ""}</p>` : ""}
           <div style="margin-top: 6px; display: flex; align-items: center; gap: 4px;">
             <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background-color: ${markerColor};"></span>
             <span class="font-bold text-[10px]" style="color: ${markerColor}; text-transform: uppercase;">${category}</span>
@@ -130,17 +155,14 @@ function DashboardMap({ analyses }: DashboardMapProps) {
       `;
 
       L.marker([lat, lng], { icon: customIcon })
-        .addTo(map)
+        .addTo(markersGroup)
         .bindPopup(popupContent);
     });
 
-    return () => {
-      if (mapRef.current) {
-        mapRef.current.remove();
-        mapRef.current = null;
-      }
-    };
-  }, [locatedAnalyses]);
+    setTimeout(() => {
+      map.invalidateSize();
+    }, 100);
+  }, [locatedKey]);
 
   return (
     <Card className="border-border bg-card">

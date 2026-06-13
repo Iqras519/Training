@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router, type Request, type Response } from "express";
 import { db, usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import crypto from "crypto";
@@ -13,7 +13,7 @@ function generateToken(userId: number): string {
   return Buffer.from(`${userId}:${Date.now()}:struturacheck`).toString("base64");
 }
 
-router.post("/auth/login", async (req, res): Promise<void> => {
+router.post("/auth/login", async (req: Request, res: Response): Promise<void> => {
   const { email, password } = req.body;
   if (!email || !password) {
     res.status(400).json({ error: "Email and password are required" });
@@ -45,7 +45,7 @@ router.post("/auth/login", async (req, res): Promise<void> => {
   });
 });
 
-router.post("/auth/register", async (req, res): Promise<void> => {
+router.post("/auth/register", async (req: Request, res: Response): Promise<void> => {
   const { name, email, password, role } = req.body;
   if (!name || !email || !password) {
     res.status(400).json({ error: "Name, email, and password are required" });

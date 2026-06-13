@@ -4,7 +4,7 @@
     "noEmit": true
   },
   "compileOnSave": false,
-  "files": ["api/index.ts"],
+  "files": [],
   "references": [
     {
       "path": "./lib/db"

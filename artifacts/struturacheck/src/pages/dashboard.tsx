@@ -1,4 +1,5 @@
-import { motion } from "framer-motion";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend,
@@ -48,6 +49,7 @@ const container = { hidden: {}, show: { transition: { staggerChildren: 0.08 } } 
 const item = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { duration: 0.3 } } };
 
 export default function DashboardPage() {
+  const [expandedId, setExpandedId] = useState<number | null>(null);
   const { data: summary, isLoading: summaryLoading } = useGetStatsSummary({
     query: { queryKey: getGetStatsSummaryQueryKey() },
   });
@@ -272,31 +274,107 @@ export default function DashboardPage() {
               </div>
             ) : (
               <div className="space-y-2">
-                {recentAnalyses.map((analysis) => (
-                  <motion.div
-                    key={analysis.id}
-                    className="flex items-center gap-4 px-3 py-2.5 rounded-lg hover:bg-accent/50 transition-colors"
-                    whileHover={{ x: 2 }}
-                    data-testid={`analysis-row-${analysis.id}`}
-                  >
-                    <div className="w-8 h-8 rounded-md bg-muted flex items-center justify-center flex-shrink-0">
-                      <Image className="w-4 h-4 text-muted-foreground" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-foreground truncate">{analysis.fileName}</div>
-                      <div className="text-xs text-muted-foreground capitalize">{analysis.structureType}</div>
-                    </div>
-                    <div className="flex items-center gap-3 flex-shrink-0">
-                      <span className="text-xs text-muted-foreground">{analysis.defectCount ?? 0} defects</span>
-                      <span
-                        className={`text-xs px-2 py-0.5 rounded-full border capitalize font-medium ${SEVERITY_COLORS[analysis.severity] || SEVERITY_COLORS.none}`}
-                        data-testid={`severity-${analysis.id}`}
+                {recentAnalyses.map((analysis) => {
+                  const isExpanded = expandedId === analysis.id;
+                  return (
+                    <div
+                      key={analysis.id}
+                      className="border border-border rounded-lg overflow-hidden bg-card"
+                      data-testid={`analysis-container-${analysis.id}`}
+                    >
+                      <div
+                        onClick={() => setExpandedId(isExpanded ? null : analysis.id)}
+                        className="flex items-center gap-4 px-3 py-2.5 hover:bg-accent/50 cursor-pointer transition-colors"
+                        data-testid={`analysis-row-${analysis.id}`}
                       >
-                        {analysis.severity}
-                      </span>
+                        <div className="w-8 h-8 rounded-md bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden">
+                          {analysis.originalImageUrl ? (
+                            <img src={analysis.originalImageUrl} alt="" className="w-8 h-8 object-cover" />
+                          ) : (
+                            <Image className="w-4 h-4 text-muted-foreground" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium text-foreground truncate">{analysis.fileName}</div>
+                          <div className="text-xs text-muted-foreground capitalize">{analysis.structureType}</div>
+                        </div>
+                        <div className="flex items-center gap-3 flex-shrink-0">
+                          <span className="text-xs text-muted-foreground">{analysis.defectCount ?? 0} defects</span>
+                          <span
+                            className={`text-xs px-2 py-0.5 rounded-full border capitalize font-medium ${SEVERITY_COLORS[analysis.severity] || SEVERITY_COLORS.none}`}
+                            data-testid={`severity-${analysis.id}`}
+                          >
+                            {analysis.severity}
+                          </span>
+                        </div>
+                      </div>
+
+                      <AnimatePresence initial={false}>
+                        {isExpanded && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.2 }}
+                            className="border-t border-border bg-accent/5 px-4 py-3 text-xs space-y-2.5 overflow-hidden"
+                          >
+                            <div className="flex flex-wrap items-center justify-between gap-4">
+                              <div className="flex gap-4">
+                                <div>
+                                  <span className="text-muted-foreground">Confidence: </span>
+                                  <span className="font-semibold text-foreground">
+                                    {analysis.confidenceScore ? `${Math.round(analysis.confidenceScore * 100)}%` : "—"}
+                                  </span>
+                                </div>
+                                <div>
+                                  <span className="text-muted-foreground">Speed: </span>
+                                  <span className="font-semibold text-foreground">
+                                    {analysis.analysisSpeedMs ? `${analysis.analysisSpeedMs}ms` : "—"}
+                                  </span>
+                                </div>
+                                <div>
+                                  <span className="text-muted-foreground">Severity: </span>
+                                  <span className="font-semibold text-foreground capitalize">
+                                    {analysis.severity}
+                                  </span>
+                                </div>
+                              </div>
+                              
+                              {analysis.originalImageUrl && (
+                                <div className="flex-shrink-0">
+                                  <img
+                                    src={analysis.originalImageUrl}
+                                    alt="Analysis Preview"
+                                    className="w-16 h-12 object-cover rounded border border-border bg-muted"
+                                  />
+                                </div>
+                              )}
+                            </div>
+
+                            {analysis.defectTypes && (() => {
+                              try {
+                                const parsed = JSON.parse(analysis.defectTypes);
+                                if (Array.isArray(parsed) && parsed.length > 0) {
+                                  return (
+                                    <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                                      <span className="text-muted-foreground mr-1">Defect Types:</span>
+                                      {parsed.map((dt: string) => (
+                                        <Badge key={dt} variant="outline" className="text-[10px] py-0 px-1.5 capitalize">
+                                          {dt.replace(/_/g, " ")}
+                                        </Badge>
+                                      ))}
+                                    </div>
+                                  );
+                                }
+                              } catch (e) {}
+                              return null;
+                            })()}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </div>
-                  </motion.div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </CardContent>

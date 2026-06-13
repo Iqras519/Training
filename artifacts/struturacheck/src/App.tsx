@@ -11,6 +11,9 @@ import AnalyticsPage from "@/pages/analytics";
 import RecommendationsPage from "@/pages/recommendations";
 import SettingsPage from "@/pages/settings";
 import NotFound from "@/pages/not-found";
+import { setAuthTokenGetter } from "@workspace/api-client-react";
+
+setAuthTokenGetter(() => localStorage.getItem("visionbuild_token"));
 
 const queryClient = new QueryClient({
   defaultOptions: {

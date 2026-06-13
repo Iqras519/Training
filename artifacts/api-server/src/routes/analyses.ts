@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router, type Request, type Response } from "express";
 import { db, analysesTable, recommendationsTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { desc } from "drizzle-orm";
@@ -165,6 +165,135 @@ router.get("/reports/:analysisId", async (req, res): Promise<void> => {
     confidenceScore: analysis.confidenceScore ?? null,
     recommendations: recs.map((r) => ({ ...r, createdAt: r.createdAt.toISOString() })),
   });
+});
+
+function getUserIdFromRequest(req: Request): number | null {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return null;
+  }
+  const token = authHeader.split(" ")[1];
+  try {
+    const decoded = Buffer.from(token, "base64").toString("utf-8");
+    const [userIdStr] = decoded.split(":");
+    const userId = parseInt(userIdStr, 10);
+    return isNaN(userId) ? null : userId;
+  } catch (e) {
+    return null;
+  }
+}
+
+router.post("/analyze", async (req: Request, res: Response): Promise<void> => {
+  const { fileName, structureType, imageData } = req.body;
+
+  if (!fileName || !structureType || !imageData) {
+    res.status(400).json({ error: "fileName, structureType, and imageData are required" });
+    return;
+  }
+
+  if (!STRUCTURE_TYPES.includes(structureType)) {
+    res.status(400).json({ error: `structureType must be one of: ${STRUCTURE_TYPES.join(", ")}` });
+    return;
+  }
+
+  let base64Image = imageData;
+  if (imageData.startsWith("data:")) {
+    const commaIndex = imageData.indexOf(",");
+    if (commaIndex !== -1) {
+      base64Image = imageData.substring(commaIndex + 1);
+    }
+  }
+
+  const modelApiUrl = process.env.MODEL_API_URL || "https://backend-jukx.onrender.com";
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+  try {
+    const response = await fetch(`${modelApiUrl}/predict`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ imageData: base64Image }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      res.status(response.status).json({ error: `ML model API returned error: ${response.statusText}` });
+      return;
+    }
+
+    const result = (await response.json()) as any;
+
+    if (!result || typeof result !== "object" || Object.keys(result).length === 0) {
+      res.status(502).json({ error: "Empty or invalid response received from ML model API" });
+      return;
+    }
+
+    const severity = result.severity || "none";
+    const defectCount = typeof result.defectCount === "number" ? result.defectCount : 0;
+    const confidenceScore = typeof result.confidenceScore === "number" ? result.confidenceScore : 0;
+    const speedMs = typeof result.analysisSpeedMs === "number" ? result.analysisSpeedMs : 0;
+    const defectTypesArr: string[] = Array.isArray(result.defectTypes) ? result.defectTypes : [];
+
+    const userId = getUserIdFromRequest(req);
+
+    const [analysis] = await db
+      .insert(analysesTable)
+      .values({
+        userId,
+        fileName,
+        structureType,
+        severity,
+        status: "completed",
+        defectCount,
+        confidenceScore,
+        analysisSpeedMs: speedMs,
+        originalImageUrl: imageData,
+        defectTypes: JSON.stringify(defectTypesArr),
+      })
+      .returning();
+
+    if (severity !== "none" && defectTypesArr.length > 0) {
+      const recSeverity = severity === "high" ? "critical" : severity === "medium" ? "warning" : "safe";
+      const recTitle =
+        severity === "high"
+          ? "Immediate Structural Intervention Required"
+          : severity === "medium"
+            ? "Scheduled Monitoring Recommended"
+            : "Routine Maintenance Suggested";
+      const reasoning = generateReasoningMarkdown(severity, structureType, defectTypesArr);
+      await db.insert(recommendationsTable).values({
+        analysisId: analysis.id,
+        severity: recSeverity,
+        title: recTitle,
+        description: `${defectTypesArr.length} defect(s) detected in ${structureType} structure. ${severity.charAt(0).toUpperCase() + severity.slice(1)} priority action required.`,
+        reasoning,
+        workOrderGenerated: false,
+      });
+    } else {
+      await db.insert(recommendationsTable).values({
+        analysisId: analysis.id,
+        severity: "safe",
+        title: "No Action Required",
+        description: `${structureType.charAt(0).toUpperCase() + structureType.slice(1)} structure shows nominal structural health. No defects detected.`,
+        reasoning: generateReasoningMarkdown("none", structureType, []),
+        workOrderGenerated: false,
+      });
+    }
+
+    res.status(200).json({ ...analysis, createdAt: analysis.createdAt.toISOString() });
+  } catch (error: any) {
+    clearTimeout(timeoutId);
+    if (error.name === "AbortError") {
+      res.status(504).json({ error: "ML model API call timed out after 30 seconds" });
+    } else {
+      res.status(503).json({ error: `ML model API is unavailable: ${error.message}` });
+    }
+  }
 });
 
 export default router;

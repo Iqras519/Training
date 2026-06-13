@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useCreateAnalysis, useDeleteAnalysis, getListAnalysesQueryKey } from "@workspace/api-client-react";
+import { useCreateAnalysis, useDeleteAnalysis, getListAnalysesQueryKey, customFetch } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 
@@ -46,6 +46,15 @@ const SEVERITY_CONFIG: Record<string, { color: string; icon: typeof CheckCircle2
   medium: { color: "text-[hsl(38,92%,50%)] border-[hsl(38,92%,50%)]/40 bg-[hsl(38,92%,50%)]/10", icon: AlertTriangle, label: "Medium Severity" },
   low: { color: "text-[hsl(160,84%,39%)] border-[hsl(160,84%,39%)]/40 bg-[hsl(160,84%,39%)]/10", icon: AlertTriangle, label: "Low Severity" },
   none: { color: "text-[hsl(160,84%,39%)] border-[hsl(160,84%,39%)]/40 bg-[hsl(160,84%,39%)]/10", icon: ShieldCheck, label: "No Defects" },
+};
+
+const fileToBase64 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = (error) => reject(error);
+  });
 };
 
 export default function UploadPage() {
@@ -113,28 +122,36 @@ export default function UploadPage() {
     setCurrentStep(0);
     setResult(null);
 
-    await simulateProgress();
+    try {
+      const imageData = await fileToBase64(files[0].file);
+      await simulateProgress();
 
-    const fileName = files[0].file.name;
-    createAnalysis.mutate(
-      { data: { fileName, structureType } },
-      {
-        onSuccess: (res: any) => {
-          setProgress(100);
-          setCurrentStep(STEPS.length - 1);
-          setTimeout(() => {
-            setIsAnalyzing(false);
-            setResult(res);
-            queryClient.invalidateQueries({ queryKey: getListAnalysesQueryKey() });
-          }, 500);
+      const fileName = files[0].file.name;
+      const res = await customFetch<AnalysisResult>("/api/analyze", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-        onError: () => {
-          setIsAnalyzing(false);
-          setProgress(0);
-          toast({ title: "Analysis failed", description: "Please try again", variant: "destructive" });
-        },
-      }
-    );
+        body: JSON.stringify({
+          fileName,
+          structureType,
+          imageData,
+        }),
+      });
+
+      setProgress(100);
+      setCurrentStep(STEPS.length - 1);
+      setTimeout(() => {
+        setIsAnalyzing(false);
+        setResult(res);
+        queryClient.invalidateQueries({ queryKey: getListAnalysesQueryKey() });
+      }, 500);
+    } catch (err: any) {
+      setIsAnalyzing(false);
+      setProgress(0);
+      const errMsg = err?.data?.error || err?.message || "Please try again";
+      toast({ title: "Analysis failed", description: errMsg, variant: "destructive" });
+    }
   };
 
   const handleDelete = () => {

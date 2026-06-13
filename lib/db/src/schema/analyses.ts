@@ -1,9 +1,11 @@
 import { pgTable, serial, text, integer, real, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
+import { usersTable } from "./users.js";
 
 export const analysesTable = pgTable("analyses", {
   id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => usersTable.id, { onDelete: "cascade" }),
   fileName: text("file_name").notNull(),
   structureType: text("structure_type").notNull(),
   severity: text("severity").notNull().default("none"),

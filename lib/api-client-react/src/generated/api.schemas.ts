@@ -69,6 +69,16 @@ export interface Analysis {
   materialType?: string | null;
   /** @nullable */
   healthScore?: number | null;
+  /** @nullable */
+  buildingName?: string | null;
+  /** @nullable */
+  address?: string | null;
+  /** @nullable */
+  city?: string | null;
+  /** @nullable */
+  latitude?: number | null;
+  /** @nullable */
+  longitude?: number | null;
   createdAt: string;
 }
 
@@ -76,6 +86,16 @@ export interface AnalysisInput {
   fileName: string;
   structureType: string;
   notes?: string;
+  /** @nullable */
+  buildingName?: string | null;
+  /** @nullable */
+  address?: string | null;
+  /** @nullable */
+  city?: string | null;
+  /** @nullable */
+  latitude?: number | null;
+  /** @nullable */
+  longitude?: number | null;
 }
 
 export interface StatsSummary {
@@ -143,6 +163,16 @@ export interface Report {
   materialType?: string | null;
   /** @nullable */
   healthScore?: number | null;
+  /** @nullable */
+  buildingName?: string | null;
+  /** @nullable */
+  address?: string | null;
+  /** @nullable */
+  city?: string | null;
+  /** @nullable */
+  latitude?: number | null;
+  /** @nullable */
+  longitude?: number | null;
   recommendations: Recommendation[];
 }
 

@@ -360,6 +360,16 @@ components:
           type: ["string", "null"]
         healthScore:
           type: ["integer", "null"]
+        buildingName:
+          type: ["string", "null"]
+        address:
+          type: ["string", "null"]
+        city:
+          type: ["string", "null"]
+        latitude:
+          type: ["number", "null"]
+        longitude:
+          type: ["number", "null"]
         createdAt:
           type: string
 
@@ -373,6 +383,16 @@ components:
           type: string
         notes:
           type: string
+        buildingName:
+          type: ["string", "null"]
+        address:
+          type: ["string", "null"]
+        city:
+          type: ["string", "null"]
+        latitude:
+          type: ["number", "null"]
+        longitude:
+          type: ["number", "null"]
 
     StatsSummary:
       type: object
@@ -486,6 +506,16 @@ components:
           type: ["string", "null"]
         healthScore:
           type: ["integer", "null"]
+        buildingName:
+          type: ["string", "null"]
+        address:
+          type: ["string", "null"]
+        city:
+          type: ["string", "null"]
+        latitude:
+          type: ["number", "null"]
+        longitude:
+          type: ["number", "null"]
         recommendations:
           type: array
           items:

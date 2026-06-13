@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import L from "leaflet";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend,
 } from "recharts";
-import { TrendingUp, TrendingDown, Activity, ShieldAlert, Clock, Image, FileText, Loader2 } from "lucide-react";
+import { TrendingUp, TrendingDown, Activity, ShieldAlert, Clock, Image, FileText, Loader2, MapPin } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -22,6 +23,144 @@ import {
   getListAnalysesQueryKey,
   customFetch,
 } from "@workspace/api-client-react";
+
+interface DashboardMapProps {
+  analyses: any[];
+}
+
+function DashboardMap({ analyses }: DashboardMapProps) {
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<L.Map | null>(null);
+
+  const locatedAnalyses = (analyses || []).filter(
+    (a) => a.latitude !== null && a.longitude !== null && a.latitude !== undefined && a.longitude !== undefined
+  );
+
+  useEffect(() => {
+    if (!mapContainerRef.current) return;
+
+    // Default center to world or center around points
+    let center: [number, number] = [20, 0];
+    let zoom = 2;
+
+    if (locatedAnalyses.length > 0) {
+      const avgLat = locatedAnalyses.reduce((sum, a) => sum + Number(a.latitude), 0) / locatedAnalyses.length;
+      const avgLng = locatedAnalyses.reduce((sum, a) => sum + Number(a.longitude), 0) / locatedAnalyses.length;
+      center = [avgLat, avgLng];
+      zoom = locatedAnalyses.length === 1 ? 12 : 5;
+    }
+
+    const map = L.map(mapContainerRef.current).setView(center, zoom);
+    mapRef.current = map;
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    }).addTo(map);
+
+    locatedAnalyses.forEach((a) => {
+      const lat = Number(a.latitude);
+      const lng = Number(a.longitude);
+      const hs = a.healthScore;
+
+      let markerColor = "hsl(160,84%,39%)"; // Green (Excellent)
+      let category = "Excellent";
+      
+      if (hs !== null && hs !== undefined) {
+        if (hs < 50) {
+          markerColor = "hsl(0,84.2%,60.2%)"; // Red (Critical)
+          category = "Critical";
+        } else if (hs < 70) {
+          markerColor = "hsl(38,92%,50%)"; // Orange (Moderate)
+          category = "Moderate";
+        } else if (hs < 90) {
+          markerColor = "hsl(189,94%,43%)"; // Teal (Good)
+          category = "Good";
+        }
+      } else {
+        if (a.severity === "high") {
+          markerColor = "hsl(0,84.2%,60.2%)";
+          category = "Critical (High Severity)";
+        } else if (a.severity === "medium") {
+          markerColor = "hsl(38,92%,50%)";
+          category = "Moderate (Medium Severity)";
+        } else if (a.severity === "low") {
+          markerColor = "hsl(189,94%,43%)";
+          category = "Good (Low Severity)";
+        }
+      }
+
+      const customIcon = L.divIcon({
+        html: `
+          <div style="
+            position: relative;
+            width: 24px;
+            height: 24px;
+            background-color: ${markerColor};
+            border: 2px solid white;
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          ">
+            <div style="
+              width: 8px;
+              height: 8px;
+              background-color: white;
+              border-radius: 50%;
+            "></div>
+          </div>
+        `,
+        className: "custom-map-pin",
+        iconSize: [24, 24],
+        iconAnchor: [12, 12],
+        popupAnchor: [0, -12],
+      });
+
+      const popupContent = `
+        <div class="text-xs p-1 text-slate-800">
+          <h4 class="font-bold text-sm text-slate-900" style="margin: 0 0 2px 0;">${a.buildingName || a.fileName}</h4>
+          ${a.address ? `<p class="text-slate-600" style="margin: 0 0 4px 0;">${a.address}${a.city ? `, ${a.city}` : ""}</p>` : ""}
+          <div style="margin-top: 6px; display: flex; align-items: center; gap: 4px;">
+            <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background-color: ${markerColor};"></span>
+            <span class="font-bold text-[10px]" style="color: ${markerColor}; text-transform: uppercase;">${category}</span>
+            ${hs !== null && hs !== undefined ? `<span class="text-slate-400 font-semibold text-[10px]">(${hs}/100)</span>` : ""}
+          </div>
+        </div>
+      `;
+
+      L.marker([lat, lng], { icon: customIcon })
+        .addTo(map)
+        .bindPopup(popupContent);
+    });
+
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
+    };
+  }, [locatedAnalyses]);
+
+  return (
+    <Card className="border-border bg-card">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm font-semibold flex items-center gap-1.5 text-foreground">
+          <MapPin className="w-4 h-4 text-primary" />
+          Inspected Assets Location Map
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="pt-0">
+        <div ref={mapContainerRef} className="w-full h-[320px] rounded-lg border border-border overflow-hidden" />
+        {locatedAnalyses.length === 0 && (
+          <p className="text-[10px] text-muted-foreground mt-2 text-center">
+            No location-enabled analyses found. Specify building coordinates when performing inspections to see them pinned here.
+          </p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 
 const COLORS = ["hsl(189,94%,43%)", "hsl(160,84%,39%)", "hsl(38,92%,50%)", "hsl(0,84.2%,60.2%)"];
 
@@ -180,6 +319,15 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
         </motion.div>
+      </motion.div>
+
+      {/* Central Map Row */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.25, duration: 0.3 }}
+      >
+        <DashboardMap analyses={analyses || []} />
       </motion.div>
 
       {/* Charts Row */}
@@ -409,6 +557,31 @@ export default function DashboardPage() {
                                     </div>
                                   );
                                 })()}
+                                {(analysis as any).buildingName && (
+                                  <div>
+                                    <span className="text-muted-foreground">Building: </span>
+                                    <span className="font-semibold text-foreground">
+                                      {(analysis as any).buildingName}
+                                    </span>
+                                  </div>
+                                )}
+                                {(analysis as any).address && (
+                                  <div>
+                                    <span className="text-muted-foreground">Location: </span>
+                                    <span className="font-semibold text-foreground">
+                                      {(analysis as any).address}
+                                      {(analysis as any).city ? `, ${(analysis as any).city}` : ""}
+                                    </span>
+                                  </div>
+                                )}
+                                {(analysis as any).latitude !== null && (analysis as any).latitude !== undefined && (
+                                  <div>
+                                    <span className="text-muted-foreground">GPS: </span>
+                                    <span className="font-semibold text-foreground">
+                                      {Number((analysis as any).latitude).toFixed(4)}, {Number((analysis as any).longitude).toFixed(4)}
+                                    </span>
+                                  </div>
+                                )}
                               </div>
                               
                               <div className="flex items-center gap-3">

@@ -24,5 +24,15 @@ export interface Report {
   materialType?: string | null;
   /** @nullable */
   healthScore?: number | null;
+  /** @nullable */
+  buildingName?: string | null;
+  /** @nullable */
+  address?: string | null;
+  /** @nullable */
+  city?: string | null;
+  /** @nullable */
+  latitude?: number | null;
+  /** @nullable */
+  longitude?: number | null;
   recommendations: Recommendation[];
 }

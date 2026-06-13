@@ -1,6 +1,7 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
+import L from "leaflet";
 import { motion, AnimatePresence } from "framer-motion";
-import { Upload, X, CheckCircle2, AlertTriangle, ShieldCheck, Loader2, Trash2, FileImage, FileText } from "lucide-react";
+import { Upload, X, CheckCircle2, AlertTriangle, ShieldCheck, Loader2, Trash2, FileImage, FileText, MapPin } from "lucide-react";
 import { generatePDFReport } from "@/lib/pdf-generator";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -37,6 +38,11 @@ interface AnalysisResult {
   numberOfFloors?: number | null;
   materialType?: string | null;
   healthScore?: number | null;
+  buildingName?: string | null;
+  address?: string | null;
+  city?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
   recommendations?: {
     id: number;
     severity: string;
@@ -44,6 +50,66 @@ interface AnalysisResult {
     description: string;
     reasoning?: string;
   }[];
+}
+
+interface ResultLocationMapProps {
+  lat: number;
+  lng: number;
+  buildingName?: string | null;
+  address?: string | null;
+  severity?: string | null;
+}
+
+function ResultLocationMap({ lat, lng, buildingName, address, severity }: ResultLocationMapProps) {
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<L.Map | null>(null);
+
+  useEffect(() => {
+    if (!mapContainerRef.current) return;
+
+    // Initialize map
+    const map = L.map(mapContainerRef.current).setView([lat, lng], 13);
+    mapRef.current = map;
+
+    // Add TileLayer
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    }).addTo(map);
+
+    // Marker styling/icon fallback for Leaflet in webpack/vite environments
+    const markerIcon = L.icon({
+      iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+      shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+      iconSize: [25, 41],
+      iconAnchor: [12, 41],
+      popupAnchor: [1, -34],
+    });
+
+    const severityLabel = severity ? severity.toUpperCase() : "NONE";
+    const popupContent = `
+      <div class="text-xs p-1 text-slate-800">
+        <h4 class="font-bold text-sm text-slate-900">${buildingName || "Building Location"}</h4>
+        ${address ? `<p class="mt-1">${address}</p>` : ""}
+        <p class="mt-1.5 font-semibold text-slate-700">Inspection: <span class="px-1.5 py-0.5 rounded text-[10px] uppercase bg-slate-100">${severityLabel} Severity</span></p>
+      </div>
+    `;
+
+    L.marker([lat, lng], { icon: markerIcon })
+      .addTo(map)
+      .bindPopup(popupContent)
+      .openPopup();
+
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
+    };
+  }, [lat, lng, buildingName, address, severity]);
+
+  return (
+    <div ref={mapContainerRef} className="w-full h-[200px] rounded-lg border border-border overflow-hidden" />
+  );
 }
 
 const STEPS = [
@@ -77,6 +143,13 @@ export default function UploadPage() {
   const [buildingAge, setBuildingAge] = useState("");
   const [numberOfFloors, setNumberOfFloors] = useState("");
   const [materialType, setMaterialType] = useState("Brick");
+  
+  const [buildingName, setBuildingName] = useState("");
+  const [address, setAddress] = useState("");
+  const [city, setCity] = useState("");
+  const [latitude, setLatitude] = useState("");
+  const [longitude, setLongitude] = useState("");
+
   const [progress, setProgress] = useState(0);
   const [currentStep, setCurrentStep] = useState(0);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -137,6 +210,47 @@ export default function UploadPage() {
       }, 400);
     });
 
+  useEffect(() => {
+    if ("geolocation" in navigator) {
+      navigator.permissions?.query({ name: "geolocation" as any }).then((result) => {
+        if (result.state === "granted") {
+          navigator.geolocation.getCurrentPosition((pos) => {
+            setLatitude((prev) => prev || String(pos.coords.latitude.toFixed(6)));
+            setLongitude((prev) => prev || String(pos.coords.longitude.toFixed(6)));
+          });
+        }
+      });
+    }
+  }, []);
+
+  const handleDetectLocation = () => {
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setLatitude(String(pos.coords.latitude.toFixed(6)));
+          setLongitude(String(pos.coords.longitude.toFixed(6)));
+          toast({
+            title: "Location detected",
+            description: `Coordinates updated: ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`,
+          });
+        },
+        (error) => {
+          toast({
+            title: "Geolocation failed",
+            description: error.message || "Could not detect location. Please enter coordinates manually.",
+            variant: "destructive",
+          });
+        }
+      );
+    } else {
+      toast({
+        title: "Not supported",
+        description: "Browser does not support geolocation.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleAnalyze = async () => {
     if (files.length === 0) {
       toast({ title: "No files selected", description: "Please upload at least one image", variant: "destructive" });
@@ -146,6 +260,23 @@ export default function UploadPage() {
     setProgress(0);
     setCurrentStep(0);
     setResult(null);
+
+    let latVal = latitude ? parseFloat(latitude) : null;
+    let lngVal = longitude ? parseFloat(longitude) : null;
+
+    if (latVal === null || lngVal === null) {
+      try {
+        const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 3000 });
+        });
+        latVal = pos.coords.latitude;
+        lngVal = pos.coords.longitude;
+        setLatitude(String(latVal));
+        setLongitude(String(lngVal));
+      } catch (err) {
+        // Continue without coordinates
+      }
+    }
 
     try {
       const imageData = await fileToBase64(files[0].file);
@@ -164,6 +295,11 @@ export default function UploadPage() {
           buildingAge: buildingAge ? parseInt(buildingAge, 10) : null,
           numberOfFloors: numberOfFloors ? parseInt(numberOfFloors, 10) : null,
           materialType,
+          buildingName: buildingName || null,
+          address: address || null,
+          city: city || null,
+          latitude: latVal,
+          longitude: lngVal,
         }),
       });
 
@@ -332,6 +468,106 @@ export default function UploadPage() {
                   className="h-9"
                   data-testid="number-of-floors-input"
                 />
+              </div>
+            </div>
+          </div>
+
+          {/* Building Location Details */}
+          <div className="space-y-4 p-4 border border-border rounded-xl bg-card">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-semibold text-foreground uppercase tracking-wide">
+                Building Location Details
+              </h3>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleDetectLocation}
+                disabled={isAnalyzing}
+                className="h-7 text-[10px] px-2 flex items-center gap-1"
+              >
+                <MapPin className="w-3.5 h-3.5" />
+                Detect My Location
+              </Button>
+            </div>
+            
+            <div className="space-y-3">
+              {/* Building Name */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">
+                  Building Name
+                </label>
+                <Input
+                  placeholder="e.g. Empire State Building"
+                  value={buildingName}
+                  onChange={(e) => setBuildingName(e.target.value)}
+                  disabled={isAnalyzing}
+                  className="h-9"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                {/* Address */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">
+                    Address
+                  </label>
+                  <Input
+                    placeholder="e.g. 350 5th Ave"
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    disabled={isAnalyzing}
+                    className="h-9"
+                  />
+                </div>
+
+                {/* City */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">
+                    City
+                  </label>
+                  <Input
+                    placeholder="e.g. New York"
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    disabled={isAnalyzing}
+                    className="h-9"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                {/* Latitude */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">
+                    Latitude
+                  </label>
+                  <Input
+                    type="number"
+                    step="any"
+                    placeholder="e.g. 40.7484"
+                    value={latitude}
+                    onChange={(e) => setLatitude(e.target.value)}
+                    disabled={isAnalyzing}
+                    className="h-9"
+                  />
+                </div>
+
+                {/* Longitude */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">
+                    Longitude
+                  </label>
+                  <Input
+                    type="number"
+                    step="any"
+                    placeholder="e.g. -73.9857"
+                    value={longitude}
+                    onChange={(e) => setLongitude(e.target.value)}
+                    disabled={isAnalyzing}
+                    className="h-9"
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -639,6 +875,32 @@ export default function UploadPage() {
                     </Button>
                   </CardContent>
                 </Card>
+
+                {result.latitude !== null && result.longitude !== null && result.latitude !== undefined && result.longitude !== undefined && (
+                  <Card className="border-border bg-card">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-semibold flex items-center gap-1.5">
+                        <MapPin className="w-4 h-4 text-primary" />
+                        Building Location
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      <div className="space-y-2">
+                        <ResultLocationMap
+                          lat={Number(result.latitude)}
+                          lng={Number(result.longitude)}
+                          buildingName={result.buildingName}
+                          address={result.address}
+                          severity={result.severity}
+                        />
+                        <div className="text-[10px] text-muted-foreground leading-relaxed mt-2 p-2 rounded bg-muted/20 border border-border/40">
+                          <span className="font-semibold text-foreground">Coordinates:</span> {Number(result.latitude).toFixed(6)}, {Number(result.longitude).toFixed(6)}
+                          {result.city && ` • ${result.city}`}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
               </motion.div>
             )}
           </AnimatePresence>

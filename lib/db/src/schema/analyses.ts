@@ -21,6 +21,11 @@ export const analysesTable = pgTable("analyses", {
   numberOfFloors: integer("number_of_floors"),
   materialType: text("material_type"),
   healthScore: integer("health_score"),
+  buildingName: text("building_name"),
+  address: text("address"),
+  city: text("city"),
+  latitude: real("latitude"),
+  longitude: real("longitude"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

@@ -256,7 +256,19 @@ function getRuleBasedRecommendations(materialType: string | null, buildingAge: n
 }
 
 router.post("/analyze", async (req: Request, res: Response): Promise<void> => {
-  const { fileName, structureType, imageData, buildingAge, numberOfFloors, materialType } = req.body;
+  const { 
+    fileName, 
+    structureType, 
+    imageData, 
+    buildingAge, 
+    numberOfFloors, 
+    materialType,
+    buildingName,
+    address,
+    city,
+    latitude,
+    longitude 
+  } = req.body;
 
   if (!fileName || !structureType || !imageData) {
     res.status(400).json({ error: "fileName, structureType, and imageData are required" });
@@ -276,6 +288,22 @@ router.post("/analyze", async (req: Request, res: Response): Promise<void> => {
     : null;
   const storedMaterial = (materialType !== undefined && materialType !== null && materialType !== "")
     ? String(materialType)
+    : null;
+
+  const storedBuildingName = (buildingName !== undefined && buildingName !== null && buildingName !== "")
+    ? String(buildingName)
+    : null;
+  const storedAddress = (address !== undefined && address !== null && address !== "")
+    ? String(address)
+    : null;
+  const storedCity = (city !== undefined && city !== null && city !== "")
+    ? String(city)
+    : null;
+  const parsedLat = (latitude !== undefined && latitude !== null && latitude !== "")
+    ? parseFloat(String(latitude))
+    : null;
+  const parsedLng = (longitude !== undefined && longitude !== null && longitude !== "")
+    ? parseFloat(String(longitude))
     : null;
 
   let base64Image = imageData;
@@ -353,6 +381,11 @@ router.post("/analyze", async (req: Request, res: Response): Promise<void> => {
         numberOfFloors: isNaN(parsedFloors as any) ? null : parsedFloors,
         materialType: storedMaterial,
         healthScore: computedHealthScore,
+        buildingName: storedBuildingName,
+        address: storedAddress,
+        city: storedCity,
+        latitude: isNaN(parsedLat as any) ? null : parsedLat,
+        longitude: isNaN(parsedLng as any) ? null : parsedLng,
       })
       .returning();
 

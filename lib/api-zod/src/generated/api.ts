@@ -79,6 +79,11 @@ export const ListAnalysesResponseItem = zod.object({
   "numberOfFloors": zod.number().nullish(),
   "materialType": zod.string().nullish(),
   "healthScore": zod.number().nullish(),
+  "buildingName": zod.string().nullish(),
+  "address": zod.string().nullish(),
+  "city": zod.string().nullish(),
+  "latitude": zod.number().nullish(),
+  "longitude": zod.number().nullish(),
   "createdAt": zod.string()
 })
 export const ListAnalysesResponse = zod.array(ListAnalysesResponseItem)
@@ -90,7 +95,12 @@ export const ListAnalysesResponse = zod.array(ListAnalysesResponseItem)
 export const CreateAnalysisBody = zod.object({
   "fileName": zod.string(),
   "structureType": zod.string(),
-  "notes": zod.string().optional()
+  "notes": zod.string().optional(),
+  "buildingName": zod.string().nullish(),
+  "address": zod.string().nullish(),
+  "city": zod.string().nullish(),
+  "latitude": zod.number().nullish(),
+  "longitude": zod.number().nullish()
 })
 
 export const CreateAnalysisResponse = zod.object({
@@ -110,6 +120,11 @@ export const CreateAnalysisResponse = zod.object({
   "numberOfFloors": zod.number().nullish(),
   "materialType": zod.string().nullish(),
   "healthScore": zod.number().nullish(),
+  "buildingName": zod.string().nullish(),
+  "address": zod.string().nullish(),
+  "city": zod.string().nullish(),
+  "latitude": zod.number().nullish(),
+  "longitude": zod.number().nullish(),
   "createdAt": zod.string()
 })
 
@@ -138,6 +153,11 @@ export const GetAnalysisResponse = zod.object({
   "numberOfFloors": zod.number().nullish(),
   "materialType": zod.string().nullish(),
   "healthScore": zod.number().nullish(),
+  "buildingName": zod.string().nullish(),
+  "address": zod.string().nullish(),
+  "city": zod.string().nullish(),
+  "latitude": zod.number().nullish(),
+  "longitude": zod.number().nullish(),
   "createdAt": zod.string()
 })
 
@@ -263,6 +283,11 @@ export const DownloadReportResponse = zod.object({
   "numberOfFloors": zod.number().nullish(),
   "materialType": zod.string().nullish(),
   "healthScore": zod.number().nullish(),
+  "buildingName": zod.string().nullish(),
+  "address": zod.string().nullish(),
+  "city": zod.string().nullish(),
+  "latitude": zod.number().nullish(),
+  "longitude": zod.number().nullish(),
   "recommendations": zod.array(zod.object({
   "id": zod.number(),
   "analysisId": zod.number(),

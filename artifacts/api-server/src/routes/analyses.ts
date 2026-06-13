@@ -157,12 +157,8 @@ router.get("/reports/:analysisId", async (req, res): Promise<void> => {
   const recs = await db.select().from(recommendationsTable).where(eq(recommendationsTable.analysisId, analysisId));
   res.json({
     analysisId: analysis.id,
-    fileName: analysis.fileName,
-    structureType: analysis.structureType,
-    severity: analysis.severity,
+    ...analysis,
     createdAt: analysis.createdAt.toISOString(),
-    defectCount: analysis.defectCount ?? 0,
-    confidenceScore: analysis.confidenceScore ?? null,
     recommendations: recs.map((r) => ({ ...r, createdAt: r.createdAt.toISOString() })),
   });
 });

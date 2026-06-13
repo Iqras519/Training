@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Upload, X, CheckCircle2, AlertTriangle, ShieldCheck, Loader2, Trash2, FileImage } from "lucide-react";
+import { Upload, X, CheckCircle2, AlertTriangle, ShieldCheck, Loader2, Trash2, FileImage, FileText } from "lucide-react";
+import { generatePDFReport } from "@/lib/pdf-generator";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
@@ -65,6 +66,7 @@ export default function UploadPage() {
   const [currentStep, setCurrentStep] = useState(0);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -151,6 +153,24 @@ export default function UploadPage() {
       setProgress(0);
       const errMsg = err?.data?.error || err?.message || "Please try again";
       toast({ title: "Analysis failed", description: errMsg, variant: "destructive" });
+    }
+  };
+
+  const handleDownloadPDF = async () => {
+    if (!result) return;
+    setDownloadingPdf(true);
+    try {
+      const reportData = await customFetch<any>(`/api/reports/${result.id}`);
+      generatePDFReport(reportData);
+      toast({ title: "Report downloaded", description: "Your PDF report has been generated successfully." });
+    } catch (err: any) {
+      toast({
+        title: "Download failed",
+        description: err?.message || "Could not retrieve report data",
+        variant: "destructive",
+      });
+    } finally {
+      setDownloadingPdf(false);
     }
   };
 
@@ -390,6 +410,21 @@ export default function UploadPage() {
                         ))}
                       </div>
                     )}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full mt-3 text-xs border-primary text-primary hover:bg-primary/10"
+                      onClick={handleDownloadPDF}
+                      disabled={downloadingPdf}
+                      data-testid="button-download-pdf"
+                    >
+                      {downloadingPdf ? (
+                        <Loader2 className="w-3 h-3 animate-spin mr-1.5" />
+                      ) : (
+                        <FileText className="w-3 h-3 mr-1.5" />
+                      )}
+                      Download PDF Report
+                    </Button>
                     <Button
                       variant="destructive"
                       size="sm"

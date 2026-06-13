@@ -4,10 +4,13 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend,
 } from "recharts";
-import { TrendingUp, TrendingDown, Activity, ShieldAlert, Clock, Image } from "lucide-react";
+import { TrendingUp, TrendingDown, Activity, ShieldAlert, Clock, Image, FileText, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { generatePDFReport } from "@/lib/pdf-generator";
 import {
   useGetStatsSummary,
   useGetStatsHistory,
@@ -17,6 +20,7 @@ import {
   getGetStatsHistoryQueryKey,
   getGetDefectDistributionQueryKey,
   getListAnalysesQueryKey,
+  customFetch,
 } from "@workspace/api-client-react";
 
 const COLORS = ["hsl(189,94%,43%)", "hsl(160,84%,39%)", "hsl(38,92%,50%)", "hsl(0,84.2%,60.2%)"];
@@ -50,6 +54,26 @@ const item = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transiti
 
 export default function DashboardPage() {
   const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [downloadingId, setDownloadingId] = useState<number | null>(null);
+  const { toast } = useToast();
+
+  const handleDownloadPDF = async (analysisId: number) => {
+    setDownloadingId(analysisId);
+    try {
+      const reportData = await customFetch<any>(`/api/reports/${analysisId}`);
+      generatePDFReport(reportData);
+      toast({ title: "Report downloaded", description: "Your PDF report has been generated successfully." });
+    } catch (err: any) {
+      toast({
+        title: "Download failed",
+        description: err?.message || "Could not retrieve report data",
+        variant: "destructive",
+      });
+    } finally {
+      setDownloadingId(null);
+    }
+  };
+
   const { data: summary, isLoading: summaryLoading } = useGetStatsSummary({
     query: { queryKey: getGetStatsSummaryQueryKey() },
   });
@@ -340,15 +364,33 @@ export default function DashboardPage() {
                                 </div>
                               </div>
                               
-                              {analysis.originalImageUrl && (
-                                <div className="flex-shrink-0">
+                              <div className="flex items-center gap-3">
+                                {analysis.originalImageUrl && (
                                   <img
                                     src={analysis.originalImageUrl}
                                     alt="Analysis Preview"
                                     className="w-16 h-12 object-cover rounded border border-border bg-muted"
                                   />
-                                </div>
-                              )}
+                                )}
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-8 text-xs border-primary text-primary hover:bg-primary/10"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDownloadPDF(analysis.id);
+                                  }}
+                                  disabled={downloadingId === analysis.id}
+                                  data-testid={`button-download-pdf-${analysis.id}`}
+                                >
+                                  {downloadingId === analysis.id ? (
+                                    <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
+                                  ) : (
+                                    <FileText className="w-3.5 h-3.5 mr-1.5" />
+                                  )}
+                                  PDF Report
+                                </Button>
+                              </div>
                             </div>
 
                             {analysis.defectTypes && (() => {

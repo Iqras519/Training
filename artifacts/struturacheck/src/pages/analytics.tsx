@@ -91,8 +91,8 @@ export default function AnalyticsPage() {
                   <XAxis dataKey="date" tick={{ fontSize: 11, fill: "rgba(255, 255, 255, 0.5)" }} tickFormatter={(v) => v.slice(5)} />
                   <YAxis tick={{ fontSize: 11, fill: "rgba(255, 255, 255, 0.5)" }} />
                   <Tooltip contentStyle={TOOLTIP_STYLE} />
-                  <Area type="monotone" dataKey="defectsFound" name="Defects Found" stroke="hsl(189,94%,43%)" fill="url(#defGrad)" strokeWidth={2.5} />
-                  <Area type="monotone" dataKey="imagesChecked" name="Images Checked" stroke="hsl(160,84%,39%)" fill="url(#imgGrad)" strokeWidth={2.5} />
+                  <Area type="monotone" dataKey="defectsFound" name="Defects Found" stroke="hsl(189,94%,43%)" fill="url(#defGrad)" strokeWidth={2.5} isAnimationActive={true} animationDuration={1400} animationEasing="ease-out" />
+                  <Area type="monotone" dataKey="imagesChecked" name="Images Checked" stroke="hsl(160,84%,39%)" fill="url(#imgGrad)" strokeWidth={2.5} isAnimationActive={true} animationDuration={1400} animationEasing="ease-out" />
                 </AreaChart>
               </ResponsiveContainer>
             )}
@@ -122,6 +122,9 @@ export default function AnalyticsPage() {
                       innerRadius={55}
                       outerRadius={85}
                       paddingAngle={4}
+                      isAnimationActive={true}
+                      animationDuration={1300}
+                      animationEasing="ease-out"
                     >
                       {(distribution || []).map((_, i) => (
                         <Cell key={i} fill={COLORS[i % COLORS.length]} />
@@ -154,7 +157,7 @@ export default function AnalyticsPage() {
                     <XAxis dataKey="type" tick={{ fontSize: 11, fill: "rgba(255, 255, 255, 0.5)" }} />
                     <YAxis tick={{ fontSize: 11, fill: "rgba(255, 255, 255, 0.5)" }} />
                     <Tooltip contentStyle={TOOLTIP_STYLE} />
-                    <Bar dataKey="count" radius={[4, 4, 0, 0]}>
+                    <Bar dataKey="count" radius={[4, 4, 0, 0]} isAnimationActive={true} animationDuration={1400} animationEasing="ease-out">
                       {barData.map((entry, i) => (
                         <Cell key={i} fill={entry.fill} />
                       ))}

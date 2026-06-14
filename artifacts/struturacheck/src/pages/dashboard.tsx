@@ -90,16 +90,16 @@ function DashboardMap({ analyses }: DashboardMapProps) {
       // High severity -> Red marker
       // Medium severity -> Yellow marker
       // Low/None severity -> Green marker
-      let markerColor = "#10b981"; // Emerald Green for Low/None
+      let markerColor = "#06b6d4"; // Cyan for healthy (low/none/completed)
       if (a.severity === "high") {
-        markerColor = "#ef4444"; // Red
+        markerColor = "#ef4444"; // Red for defect
       } else if (a.severity === "medium") {
-        markerColor = "#f59e0b"; // Amber Yellow
+        markerColor = "#f59e0b"; // Amber Yellow for warning
       }
 
       const customIcon = L.divIcon({
         html: `
-          <div style="
+          <div class="map-pin-inner" style="
             position: relative;
             width: 22px;
             height: 22px;
@@ -208,7 +208,7 @@ function SparkLine({ data, color }: { data: number[]; color: string }) {
             <stop offset="95%" stopColor={color} stopOpacity={0} />
           </linearGradient>
         </defs>
-        <Area type="monotone" dataKey="v" stroke={color} fill={`url(#sg-${color})`} strokeWidth={1.5} dot={false} />
+        <Area type="monotone" dataKey="v" stroke={color} fill={`url(#sg-${color})`} strokeWidth={1.5} dot={false} isAnimationActive={true} animationDuration={1200} animationEasing="ease-out" />
       </AreaChart>
     </ResponsiveContainer>
   );
@@ -445,8 +445,8 @@ export default function DashboardPage() {
                         fontSize: "12px",
                       }}
                     />
-                    <Area type="monotone" dataKey="defectsFound" name="Defects" stroke="hsl(189,94%,43%)" fill="url(#defectsGrad)" strokeWidth={2.5} />
-                    <Area type="monotone" dataKey="imagesChecked" name="Images" stroke="hsl(160,84%,39%)" fill="url(#imagesGrad)" strokeWidth={2.5} />
+                    <Area type="monotone" dataKey="defectsFound" name="Defects" stroke="hsl(189,94%,43%)" fill="url(#defectsGrad)" strokeWidth={2.5} isAnimationActive={true} animationDuration={1400} animationEasing="ease-out" />
+                    <Area type="monotone" dataKey="imagesChecked" name="Images" stroke="hsl(160,84%,39%)" fill="url(#imagesGrad)" strokeWidth={2.5} isAnimationActive={true} animationDuration={1400} animationEasing="ease-out" />
                   </AreaChart>
                 </ResponsiveContainer>
               )}
@@ -476,6 +476,9 @@ export default function DashboardPage() {
                     innerRadius={55}
                     outerRadius={85}
                     paddingAngle={4}
+                    isAnimationActive={true}
+                    animationDuration={1300}
+                    animationEasing="ease-out"
                   >
                     {(distribution || []).map((_, i) => (
                       <Cell key={i} fill={COLORS[i % COLORS.length]} />

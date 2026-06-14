@@ -63,9 +63,9 @@ function FloatingParticles() {
     }> = [];
 
     const colors = [
-      "rgba(6, 182, 212, 0.25)",  // Cyan
-      "rgba(16, 185, 129, 0.2)",  // Emerald
-      "rgba(99, 102, 241, 0.22)", // Indigo
+      "rgba(6, 182, 212, 0.18)",  // Cyan
+      "rgba(16, 185, 129, 0.15)",  // Emerald
+      "rgba(99, 102, 241, 0.15)", // Indigo
     ];
 
     const resizeCanvas = () => {
@@ -81,26 +81,26 @@ function FloatingParticles() {
     }
 
     const createParticle = () => {
-      const size = Math.random() * 1.5 + 0.5;
+      const size = Math.random() * 1.2 + 0.4;
       const x = Math.random() * canvas.width;
       const y = canvas.height + 10;
-      const speedY = -(Math.random() * 0.3 + 0.1);
-      const speedX = (Math.random() - 0.5) * 0.15;
-      const opacity = Math.random() * 0.3 + 0.08;
+      const speedY = -(Math.random() * 0.15 + 0.05);
+      const speedX = (Math.random() - 0.5) * 0.08;
+      const opacity = Math.random() * 0.15 + 0.03;
       const color = colors[Math.floor(Math.random() * colors.length)];
 
       particles.push({ x, y, size, speedY, speedX, opacity, color });
     };
 
     const initParticles = () => {
-      const count = Math.min(35, Math.floor((canvas.width * canvas.height) / 40000));
+      const count = Math.min(30, Math.floor((canvas.width * canvas.height) / 50000));
       for (let i = 0; i < count; i++) {
-        const size = Math.random() * 1.5 + 0.5;
+        const size = Math.random() * 1.2 + 0.4;
         const x = Math.random() * canvas.width;
         const y = Math.random() * canvas.height;
-        const speedY = -(Math.random() * 0.3 + 0.1);
-        const speedX = (Math.random() - 0.5) * 0.15;
-        const opacity = Math.random() * 0.3 + 0.08;
+        const speedY = -(Math.random() * 0.15 + 0.05);
+        const speedX = (Math.random() - 0.5) * 0.08;
+        const opacity = Math.random() * 0.15 + 0.03;
         const color = colors[Math.floor(Math.random() * colors.length)];
         particles.push({ x, y, size, speedY, speedX, opacity, color });
       }
@@ -211,10 +211,10 @@ export default function Layout({ children }: { children: ReactNode }) {
             return (
               <Link key={href} href={href}>
                 <motion.div
-                  whileHover={{ x: collapsed ? 0 : 2 }}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-150 group relative border ${
+                  whileHover={{ x: collapsed ? 0 : 4 }}
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200 group relative border ${
                     isActive
-                      ? "bg-cyan-500/10 text-cyan-400 border-cyan-500/20"
+                      ? "bg-cyan-500/8 text-cyan-400 border-cyan-500/15 shadow-[0_0_15px_rgba(6,182,212,0.05)]"
                       : "text-slate-400 border-transparent hover:bg-white/5 hover:text-white"
                   }`}
                   data-testid={`nav-${label.toLowerCase()}`}
@@ -222,10 +222,10 @@ export default function Layout({ children }: { children: ReactNode }) {
                   {isActive && (
                     <motion.div
                       layoutId="activeNav"
-                      className="absolute left-0 top-0 bottom-0 w-0.5 rounded-full bg-cyan-400"
+                      className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-md bg-cyan-400 shadow-[0_0_8px_rgba(6,182,212,0.8)]"
                     />
                   )}
-                  <Icon className={`w-5 h-5 flex-shrink-0 ${isActive ? "text-cyan-400" : ""}`} />
+                  <Icon className={`w-5 h-5 flex-shrink-0 transition-transform duration-300 group-hover:scale-110 ${isActive ? "text-cyan-400 scale-105" : "text-slate-400 group-hover:text-slate-200"}`} />
                   <AnimatePresence>
                     {!collapsed && (
                       <motion.span

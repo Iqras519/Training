@@ -92,16 +92,16 @@ function ResultLocationMap({
     }).addTo(map);
 
     // Severity-based marker colors:
-    let markerColor = "#10b981"; // Emerald Green for Low/None
+    let markerColor = "#06b6d4"; // Cyan for healthy (low/none/completed)
     if (severity === "high") {
-      markerColor = "#ef4444"; // Red
+      markerColor = "#ef4444"; // Red for defect
     } else if (severity === "medium") {
-      markerColor = "#f59e0b"; // Amber Yellow
+      markerColor = "#f59e0b"; // Amber Yellow for warning
     }
 
     const customIcon = L.divIcon({
       html: `
-        <div style="
+        <div class="map-pin-inner" style="
           position: relative;
           width: 22px;
           height: 22px;

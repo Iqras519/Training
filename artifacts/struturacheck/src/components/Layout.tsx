@@ -265,7 +265,7 @@ export default function Layout({ children }: { children: ReactNode }) {
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative z-10">
         {/* Top Navbar */}
-        <header className="flex-shrink-0 flex items-center justify-between h-16 px-6 bg-slate-950/25 backdrop-blur-md border-b border-white/5 z-10">
+        <header className="flex-shrink-0 flex items-center justify-between h-16 px-6 bg-slate-950/25 backdrop-blur-md border-b border-white/5 relative z-20">
           <div className="flex items-center gap-4">
             <h1 className="text-base font-semibold text-foreground tracking-tight" data-testid="page-title">
               {pageTitle}

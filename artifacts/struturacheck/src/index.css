@@ -303,3 +303,156 @@
     inset: -1px;
   }
 }
+
+/* ============================================================================
+   PREMIUM REDESIGN UTILITY CLASSES
+   ============================================================================ */
+
+/* Animated dark gradient background */
+@keyframes gradientFlow {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animated-dark-bg {
+  background: linear-gradient(-45deg, #07090e, #0e0d1b, #071120, #04060b);
+  background-size: 400% 400%;
+  animation: gradientFlow 20s ease infinite;
+}
+
+/* Blueprint grid pattern overlay */
+.blueprint-grid {
+  background-size: 40px 40px;
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  position: relative;
+}
+
+.blueprint-grid::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 50%, transparent 20%, rgba(7, 9, 14, 0.85) 100%);
+  pointer-events: none;
+}
+
+/* Glassmorphism card styles */
+.glass-card {
+  background: rgba(13, 15, 22, 0.4) !important;
+  backdrop-filter: blur(16px) saturate(140%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(140%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.07) !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37), inset 0 1px 0 0 rgba(255, 255, 255, 0.05) !important;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.glass-card:hover {
+  background: rgba(17, 20, 28, 0.5) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.5), inset 0 1px 0 0 rgba(255, 255, 255, 0.08) !important;
+  transform: translateY(-2px);
+}
+
+/* Glowing Top Accents */
+.card-glow-cyan {
+  position: relative;
+  overflow: hidden;
+}
+.card-glow-cyan::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, hsl(189, 94%, 43%), transparent);
+  opacity: 0.6;
+}
+.card-glow-cyan:hover::after {
+  opacity: 1;
+}
+
+.card-glow-destructive {
+  position: relative;
+  overflow: hidden;
+}
+.card-glow-destructive::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, hsl(0, 84.2%, 60.2%), transparent);
+  opacity: 0.6;
+}
+.card-glow-destructive:hover::after {
+  opacity: 1;
+}
+
+.card-glow-success {
+  position: relative;
+  overflow: hidden;
+}
+.card-glow-success::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, hsl(160, 84%, 39%), transparent);
+  opacity: 0.6;
+}
+.card-glow-success:hover::after {
+  opacity: 1;
+}
+
+/* Pulsing map pin keyframes */
+@keyframes pulseRing {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(2.6);
+    opacity: 0;
+  }
+}
+
+.map-pulse-ring {
+  position: absolute;
+  inset: -10px;
+  border-radius: 50%;
+  pointer-events: none;
+  animation: pulseRing 2.2s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+}
+
+/* Map dark theme overlay */
+.dark-map-container .leaflet-container {
+  filter: invert(0.9) hue-rotate(185deg) brightness(0.65) contrast(1.2);
+  background: #07090e !important;
+}
+
+.dark-map-container .leaflet-tile-pane {
+  opacity: 0.85;
+}
+
+.dark-map-container .leaflet-bar a {
+  background-color: rgba(20, 22, 28, 0.8) !important;
+  color: #fff !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.dark-map-container .leaflet-bar a:hover {
+  background-color: rgba(30, 34, 44, 0.9) !important;
+}
+

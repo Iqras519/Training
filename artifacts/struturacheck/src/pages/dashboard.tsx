@@ -85,72 +85,76 @@ function DashboardMap({ analyses }: DashboardMapProps) {
     locatedAnalyses.forEach((a) => {
       const lat = Number(a.latitude);
       const lng = Number(a.longitude);
-      const hs = a.healthScore;
 
-      let markerColor = "hsl(160,84%,39%)"; // Green (Excellent)
-      let category = "Excellent";
-      
-      if (hs !== null && hs !== undefined) {
-        if (hs < 50) {
-          markerColor = "hsl(0,84.2%,60.2%)"; // Red (Critical)
-          category = "Critical";
-        } else if (hs < 70) {
-          markerColor = "hsl(38,92%,50%)"; // Orange (Moderate)
-          category = "Moderate";
-        } else if (hs < 90) {
-          markerColor = "hsl(189,94%,43%)"; // Teal (Good)
-          category = "Good";
-        }
-      } else {
-        if (a.severity === "high") {
-          markerColor = "hsl(0,84.2%,60.2%)";
-          category = "Critical (High Severity)";
-        } else if (a.severity === "medium") {
-          markerColor = "hsl(38,92%,50%)";
-          category = "Moderate (Medium Severity)";
-        } else if (a.severity === "low") {
-          markerColor = "hsl(189,94%,43%)";
-          category = "Good (Low Severity)";
-        }
+      // Severity-based marker colors:
+      // High severity -> Red marker
+      // Medium severity -> Yellow marker
+      // Low/None severity -> Green marker
+      let markerColor = "#10b981"; // Emerald Green for Low/None
+      if (a.severity === "high") {
+        markerColor = "#ef4444"; // Red
+      } else if (a.severity === "medium") {
+        markerColor = "#f59e0b"; // Amber Yellow
       }
 
       const customIcon = L.divIcon({
         html: `
           <div style="
             position: relative;
-            width: 24px;
-            height: 24px;
+            width: 22px;
+            height: 22px;
             background-color: ${markerColor};
-            border: 2px solid white;
+            border: 2px solid rgba(255, 255, 255, 0.95);
             border-radius: 50%;
-            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            box-shadow: 0 0 15px ${markerColor};
             display: flex;
             align-items: center;
             justify-content: center;
           ">
+            <div class="map-pulse-ring" style="background-color: ${markerColor};"></div>
             <div style="
-              width: 8px;
-              height: 8px;
+              width: 6px;
+              height: 6px;
               background-color: white;
               border-radius: 50%;
             "></div>
           </div>
         `,
         className: "custom-map-pin",
-        iconSize: [24, 24],
-        iconAnchor: [12, 12],
-        popupAnchor: [0, -12],
+        iconSize: [22, 22],
+        iconAnchor: [11, 11],
+        popupAnchor: [0, -11],
       });
 
+      const formatDate = (dateStr: string | Date) => {
+        const date = new Date(dateStr);
+        const day = String(date.getDate()).padStart(2, "0");
+        const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        const month = months[date.getMonth()];
+        const year = date.getFullYear();
+        return `${day}-${month}-${year}`;
+      };
+
+      const capitalize = (str: string) => {
+        if (!str) return "—";
+        return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+      };
+
+      const buildingNameVal = a.buildingName || a.fileName;
+      const structTypeVal = capitalize(a.structureType);
+      const materialTypeVal = a.materialType ? capitalize(a.materialType) : "Unknown";
+      const severityVal = capitalize(a.severity);
+      const confidenceVal = a.confidenceScore ? `${Math.round(a.confidenceScore * 100)}%` : "—";
+      const dateVal = a.createdAt ? formatDate(a.createdAt) : "—";
+
       const popupContent = `
-        <div class="text-xs p-1 text-slate-800 font-sans">
-          <h4 class="font-bold text-sm text-slate-900" style="margin: 0 0 2px 0;">${a.buildingName || a.fileName}</h4>
-          ${a.address ? `<p class="text-slate-600" style="margin: 0 0 4px 0; font-size: 10px;">${a.address}${a.city ? `, ${a.city}` : ""}</p>` : ""}
-          <div style="margin-top: 6px; display: flex; align-items: center; gap: 4px;">
-            <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background-color: ${markerColor};"></span>
-            <span class="font-bold text-[10px]" style="color: ${markerColor}; text-transform: uppercase;">${category}</span>
-            ${hs !== null && hs !== undefined ? `<span class="text-slate-400 font-semibold text-[10px]">(${hs}/100)</span>` : ""}
-          </div>
+        <div class="text-xs p-2.5 text-slate-200 font-sans leading-relaxed bg-slate-950/95 border border-white/10 rounded-lg shadow-xl" style="min-width: 160px; backdrop-filter: blur(4px);">
+          <h4 class="font-bold text-sm text-white border-b border-white/5 pb-1 mb-1.5" style="margin: 0;">${buildingNameVal}</h4>
+          <p style="margin: 0; color: #94a3b8;">Type: <span style="color: #cbd5e1; font-weight: 500;">${structTypeVal}</span></p>
+          <p style="margin: 0; color: #94a3b8;">Material: <span style="color: #cbd5e1; font-weight: 500;">${materialTypeVal}</span></p>
+          <p style="margin: 4px 0 0 0; color: #94a3b8;">Severity: <span style="font-weight: 600; color: ${markerColor};">${severityVal}</span></p>
+          <p style="margin: 0; color: #94a3b8;">Confidence: <span style="color: #e2e8f0; font-weight: 500;">${confidenceVal}</span></p>
+          <p style="margin: 0; color: #94a3b8;">Date: <span style="color: #e2e8f0; font-weight: 500;">${dateVal}</span></p>
         </div>
       `;
 
@@ -165,18 +169,18 @@ function DashboardMap({ analyses }: DashboardMapProps) {
   }, [locatedKey]);
 
   return (
-    <Card className="border-border bg-card">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-semibold flex items-center gap-1.5 text-foreground">
-          <MapPin className="w-4 h-4 text-primary" />
-          Inspected Assets Location Map
+    <Card className="glass-card shadow-lg shadow-cyan-500/5">
+      <CardHeader className="pb-3 border-b border-white/5">
+        <CardTitle className="text-sm font-semibold flex items-center gap-1.5 text-foreground tracking-wider uppercase">
+          <MapPin className="w-4 h-4 text-cyan-400 animate-pulse" />
+          Inspected Assets Geospatial Telemetry
         </CardTitle>
       </CardHeader>
-      <CardContent className="pt-0">
-        <div ref={mapContainerRef} className="w-full h-[320px] rounded-lg border border-border overflow-hidden" />
+      <CardContent className="pt-4 dark-map-container">
+        <div ref={mapContainerRef} className="w-full h-[340px] rounded-lg border border-white/10 overflow-hidden shadow-inner" />
         {locatedAnalyses.length === 0 && (
-          <p className="text-[10px] text-muted-foreground mt-2 text-center">
-            No location-enabled analyses found. Specify building coordinates when performing inspections to see them pinned here.
+          <p className="text-[10px] text-muted-foreground mt-2 text-center font-mono">
+            // No location-enabled analyses found. Coordinate mapping inactive.
           </p>
         )}
       </CardContent>
@@ -187,10 +191,10 @@ function DashboardMap({ analyses }: DashboardMapProps) {
 const COLORS = ["hsl(189,94%,43%)", "hsl(160,84%,39%)", "hsl(38,92%,50%)", "hsl(0,84.2%,60.2%)"];
 
 const SEVERITY_COLORS: Record<string, string> = {
-  high: "text-destructive bg-destructive/10 border-destructive/30",
-  medium: "text-[hsl(38,92%,50%)] bg-[hsl(38,92%,50%)]/10 border-[hsl(38,92%,50%)]/30",
-  low: "text-[hsl(160,84%,39%)] bg-[hsl(160,84%,39%)]/10 border-[hsl(160,84%,39%)]/30",
-  none: "text-muted-foreground bg-muted/50 border-border",
+  high: "text-red-400 bg-red-500/10 border-red-500/30 shadow-[0_0_10px_rgba(239,68,68,0.1)]",
+  medium: "text-amber-400 bg-amber-500/10 border-amber-500/30 shadow-[0_0_10px_rgba(245,158,11,0.1)]",
+  low: "text-emerald-400 bg-emerald-500/10 border-emerald-500/30 shadow-[0_0_10px_rgba(16,185,129,0.1)]",
+  none: "text-slate-400 bg-slate-500/10 border-slate-500/30",
 };
 
 function SparkLine({ data, color }: { data: number[]; color: string }) {
@@ -212,6 +216,154 @@ function SparkLine({ data, color }: { data: number[]; color: string }) {
 
 const container = { hidden: {}, show: { transition: { staggerChildren: 0.08 } } };
 const item = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { duration: 0.3 } } };
+
+function FloatingParticles() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    let animationFrameId: number;
+    let particles: Array<{
+      x: number;
+      y: number;
+      size: number;
+      speedY: number;
+      speedX: number;
+      opacity: number;
+      color: string;
+    }> = [];
+
+    const colors = [
+      "rgba(6, 182, 212, 0.25)",  // Cyan
+      "rgba(16, 185, 129, 0.2)",  // Emerald
+      "rgba(99, 102, 241, 0.22)", // Indigo
+    ];
+
+    const resizeCanvas = () => {
+      if (!canvas.parentElement) return;
+      canvas.width = canvas.parentElement.clientWidth;
+      canvas.height = canvas.parentElement.clientHeight;
+    };
+
+    resizeCanvas();
+    const resizeObserver = new ResizeObserver(() => resizeCanvas());
+    if (canvas.parentElement) {
+      resizeObserver.observe(canvas.parentElement);
+    }
+
+    const createParticle = () => {
+      const size = Math.random() * 1.5 + 0.5;
+      const x = Math.random() * canvas.width;
+      const y = canvas.height + 10;
+      const speedY = -(Math.random() * 0.3 + 0.1);
+      const speedX = (Math.random() - 0.5) * 0.15;
+      const opacity = Math.random() * 0.3 + 0.08;
+      const color = colors[Math.floor(Math.random() * colors.length)];
+
+      particles.push({ x, y, size, speedY, speedX, opacity, color });
+    };
+
+    const initParticles = () => {
+      const count = Math.min(30, Math.floor((canvas.width * canvas.height) / 40000));
+      for (let i = 0; i < count; i++) {
+        const size = Math.random() * 1.5 + 0.5;
+        const x = Math.random() * canvas.width;
+        const y = Math.random() * canvas.height;
+        const speedY = -(Math.random() * 0.3 + 0.1);
+        const speedX = (Math.random() - 0.5) * 0.15;
+        const opacity = Math.random() * 0.3 + 0.08;
+        const color = colors[Math.floor(Math.random() * colors.length)];
+        particles.push({ x, y, size, speedY, speedX, opacity, color });
+      }
+    };
+
+    initParticles();
+
+    const drawParticles = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      if (particles.length < 35 && Math.random() < 0.02) {
+        createParticle();
+      }
+
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.y += p.speedY;
+        p.x += p.speedX;
+
+        if (p.x < 0) p.x = canvas.width;
+        if (p.x > canvas.width) p.x = 0;
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = p.opacity;
+        ctx.fill();
+
+        if (p.y < -10) {
+          particles.splice(i, 1);
+        }
+      }
+
+      ctx.globalAlpha = 1.0;
+      animationFrameId = requestAnimationFrame(drawParticles);
+    };
+
+    drawParticles();
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+      resizeObserver.disconnect();
+    };
+  }, []);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="absolute inset-0 pointer-events-none z-0"
+    />
+  );
+}
+
+function AnimatedCounter({ value }: { value: number }) {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    let start = 0;
+    const end = value;
+    if (start === end) {
+      setCount(end);
+      return;
+    }
+
+    const duration = 1000;
+    const startTime = performance.now();
+
+    const updateCount = (now: number) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      
+      const easeProgress = progress * (2 - progress);
+      const current = Math.floor(easeProgress * (end - start) + start);
+      
+      setCount(current);
+
+      if (progress < 1) {
+        requestAnimationFrame(updateCount);
+      } else {
+        setCount(end);
+      }
+    };
+
+    requestAnimationFrame(updateCount);
+  }, [value]);
+
+  return <>{count.toLocaleString()}</>;
+}
 
 export default function DashboardPage() {
   const [expandedId, setExpandedId] = useState<number | null>(null);
@@ -252,23 +404,25 @@ export default function DashboardPage() {
   const sparklineData = history?.slice(-8).map((h) => h.defectsFound) || [0, 2, 1, 3, 2, 4, 3, 5];
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="relative min-h-full animated-dark-bg blueprint-grid p-6 sm:p-8 space-y-8 overflow-hidden z-10">
+      <FloatingParticles />
+
       {/* KPI Cards */}
       <motion.div
         variants={container}
         initial="hidden"
         animate="show"
-        className="grid grid-cols-1 sm:grid-cols-3 gap-4"
+        className="grid grid-cols-1 sm:grid-cols-3 gap-6 relative z-10"
       >
         {/* Total Images */}
         <motion.div variants={item}>
-          <Card className="border-border bg-card overflow-hidden" data-testid="kpi-total-images">
+          <Card className="glass-card card-glow-cyan overflow-hidden" data-testid="kpi-total-images">
             <CardContent className="p-5">
               <div className="flex items-center justify-between mb-3">
-                <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <Image className="w-4 h-4 text-primary" />
+                <div className="w-9 h-9 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center">
+                  <Image className="w-4 h-4 text-cyan-400" />
                 </div>
-                <div className="flex items-center gap-1 text-xs text-[hsl(160,84%,39%)]">
+                <div className="flex items-center gap-1 text-xs text-emerald-400 font-semibold font-mono">
                   <TrendingUp className="w-3 h-3" />
                   {summary?.trendPercent !== undefined ? `+${summary.trendPercent}%` : "+12%"}
                 </div>
@@ -276,10 +430,12 @@ export default function DashboardPage() {
               {summaryLoading ? (
                 <Skeleton className="h-8 w-20 mb-1" />
               ) : (
-                <div className="text-3xl font-bold text-foreground">{summary?.totalImagesChecked ?? 0}</div>
+                <div className="text-3xl font-bold text-foreground tracking-tight">
+                  <AnimatedCounter value={summary?.totalImagesChecked ?? 0} />
+                </div>
               )}
-              <div className="text-xs text-muted-foreground mt-1">Total Images Checked</div>
-              <div className="mt-2">
+              <div className="text-[11px] font-medium text-slate-400 mt-1 uppercase tracking-wider">Total Images Checked</div>
+              <div className="mt-4">
                 <SparkLine data={sparklineData} color="hsl(189,94%,43%)" />
               </div>
             </CardContent>
@@ -288,27 +444,29 @@ export default function DashboardPage() {
 
         {/* Defects Found */}
         <motion.div variants={item}>
-          <Card className="border-border bg-card" data-testid="kpi-defects">
+          <Card className="glass-card card-glow-destructive" data-testid="kpi-defects">
             <CardContent className="p-5">
               <div className="flex items-center justify-between mb-3">
-                <div className="w-9 h-9 rounded-lg bg-destructive/10 flex items-center justify-center">
-                  <ShieldAlert className="w-4 h-4 text-destructive" />
+                <div className="w-9 h-9 rounded-lg bg-red-500/10 border border-red-500/20 flex items-center justify-center">
+                  <ShieldAlert className="w-4 h-4 text-red-400" />
                 </div>
               </div>
               {summaryLoading ? (
                 <Skeleton className="h-8 w-20 mb-1" />
               ) : (
-                <div className="text-3xl font-bold text-foreground">{summary?.totalDefectsFound ?? 0}</div>
+                <div className="text-3xl font-bold text-foreground tracking-tight">
+                  <AnimatedCounter value={summary?.totalDefectsFound ?? 0} />
+                </div>
               )}
-              <div className="text-xs text-muted-foreground mt-1">Defects Detected</div>
-              <div className="flex gap-2 mt-3 flex-wrap">
-                <span className="text-xs px-2 py-0.5 rounded-full bg-destructive/10 text-destructive border border-destructive/20">
+              <div className="text-[11px] font-medium text-slate-400 mt-1 uppercase tracking-wider">Defects Detected</div>
+              <div className="flex gap-2 mt-4 flex-wrap">
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-red-500/10 text-red-400 border border-red-500/20">
                   High: {summary?.highSeverityCount ?? 0}
                 </span>
-                <span className="text-xs px-2 py-0.5 rounded-full bg-[hsl(38,92%,50%)]/10 text-[hsl(38,92%,50%)] border border-[hsl(38,92%,50%)]/20">
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">
                   Med: {summary?.mediumSeverityCount ?? 0}
                 </span>
-                <span className="text-xs px-2 py-0.5 rounded-full bg-[hsl(160,84%,39%)]/10 text-[hsl(160,84%,39%)] border border-[hsl(160,84%,39%)]/20">
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                   Low: {summary?.lowSeverityCount ?? 0}
                 </span>
               </div>
@@ -318,24 +476,24 @@ export default function DashboardPage() {
 
         {/* Avg Speed */}
         <motion.div variants={item}>
-          <Card className="border-border bg-card" data-testid="kpi-speed">
+          <Card className="glass-card card-glow-success" data-testid="kpi-speed">
             <CardContent className="p-5">
               <div className="flex items-center justify-between mb-3">
-                <div className="w-9 h-9 rounded-lg bg-[hsl(160,84%,39%)]/10 flex items-center justify-center">
-                  <Clock className="w-4 h-4 text-[hsl(160,84%,39%)]" />
+                <div className="w-9 h-9 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+                  <Clock className="w-4 h-4 text-emerald-400" />
                 </div>
-                <Activity className="w-4 h-4 text-muted-foreground" />
+                <Activity className="w-4 h-4 text-slate-400" />
               </div>
               {summaryLoading ? (
                 <Skeleton className="h-8 w-24 mb-1" />
               ) : (
-                <div className="text-3xl font-bold text-foreground">
-                  {Math.round(summary?.avgAnalysisSpeedMs ?? 0)}
-                  <span className="text-sm font-normal text-muted-foreground ml-1">ms</span>
+                <div className="text-3xl font-bold text-foreground tracking-tight">
+                  <AnimatedCounter value={Math.round(summary?.avgAnalysisSpeedMs ?? 0)} />
+                  <span className="text-sm font-normal text-slate-400 ml-1">ms</span>
                 </div>
               )}
-              <div className="text-xs text-muted-foreground mt-1">Avg Analysis Speed</div>
-              <div className="mt-2">
+              <div className="text-[11px] font-medium text-slate-400 mt-1 uppercase tracking-wider">Avg Analysis Speed</div>
+              <div className="mt-4">
                 <SparkLine data={[350, 410, 390, 480, 420, 380, 360, 395]} color="hsl(160,84%,39%)" />
               </div>
             </CardContent>
@@ -348,12 +506,13 @@ export default function DashboardPage() {
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.25, duration: 0.3 }}
+        className="relative z-10"
       >
         <DashboardMap analyses={analyses || []} />
       </motion.div>
 
       {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 relative z-10">
         {/* History Chart */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -361,44 +520,45 @@ export default function DashboardPage() {
           transition={{ delay: 0.3, duration: 0.4 }}
           className="lg:col-span-2"
         >
-          <Card className="border-border bg-card h-full">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-semibold text-foreground">Defect Detection History</CardTitle>
+          <Card className="glass-card shadow-lg h-full">
+            <CardHeader className="pb-3 border-b border-white/5">
+              <CardTitle className="text-sm font-semibold text-foreground uppercase tracking-wider">Defect Detection History</CardTitle>
             </CardHeader>
-            <CardContent className="pt-0">
+            <CardContent className="pt-6">
               {historyLoading ? (
                 <Skeleton className="w-full h-48" />
               ) : (
-                <ResponsiveContainer width="100%" height={220}>
+                <ResponsiveContainer width="100%" height={240}>
                   <AreaChart data={history || []} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
                     <defs>
                       <linearGradient id="defectsGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="hsl(189,94%,43%)" stopOpacity={0.3} />
+                        <stop offset="5%" stopColor="hsl(189,94%,43%)" stopOpacity={0.4} />
                         <stop offset="95%" stopColor="hsl(189,94%,43%)" stopOpacity={0} />
                       </linearGradient>
                       <linearGradient id="imagesGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="hsl(160,84%,39%)" stopOpacity={0.2} />
+                        <stop offset="5%" stopColor="hsl(160,84%,39%)" stopOpacity={0.3} />
                         <stop offset="95%" stopColor="hsl(160,84%,39%)" stopOpacity={0} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(220,15%,20%)" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.05)" />
                     <XAxis
                       dataKey="date"
-                      tick={{ fontSize: 11, fill: "hsl(215,20%,55%)" }}
+                      tick={{ fontSize: 11, fill: "rgba(255, 255, 255, 0.5)" }}
                       tickFormatter={(v) => v.slice(5)}
                     />
-                    <YAxis tick={{ fontSize: 11, fill: "hsl(215,20%,55%)" }} />
+                    <YAxis tick={{ fontSize: 11, fill: "rgba(255, 255, 255, 0.5)" }} />
                     <Tooltip
                       contentStyle={{
-                        background: "hsl(220,15%,13%)",
-                        border: "1px solid hsl(220,15%,22%)",
+                        background: "rgba(13, 15, 22, 0.85)",
+                        backdropFilter: "blur(8px)",
+                        border: "1px solid rgba(255, 255, 255, 0.15)",
                         borderRadius: "8px",
-                        color: "hsl(210,20%,98%)",
+                        color: "rgba(255, 255, 255, 0.9)",
                         fontSize: "12px",
                       }}
                     />
-                    <Area type="monotone" dataKey="defectsFound" name="Defects" stroke="hsl(189,94%,43%)" fill="url(#defectsGrad)" strokeWidth={2} />
-                    <Area type="monotone" dataKey="imagesChecked" name="Images" stroke="hsl(160,84%,39%)" fill="url(#imagesGrad)" strokeWidth={2} />
+                    <Area type="monotone" dataKey="defectsFound" name="Defects" stroke="hsl(189,94%,43%)" fill="url(#defectsGrad)" strokeWidth={2.5} />
+                    <Area type="monotone" dataKey="imagesChecked" name="Images" stroke="hsl(160,84%,39%)" fill="url(#imagesGrad)" strokeWidth={2.5} />
                   </AreaChart>
                 </ResponsiveContainer>
               )}
@@ -412,12 +572,12 @@ export default function DashboardPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.35, duration: 0.4 }}
         >
-          <Card className="border-border bg-card h-full">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-semibold text-foreground">Defect Distribution</CardTitle>
+          <Card className="glass-card shadow-lg h-full">
+            <CardHeader className="pb-3 border-b border-white/5">
+              <CardTitle className="text-sm font-semibold text-foreground uppercase tracking-wider">Defect Distribution</CardTitle>
             </CardHeader>
-            <CardContent className="pt-0">
-              <ResponsiveContainer width="100%" height={220}>
+            <CardContent className="pt-6">
+              <ResponsiveContainer width="100%" height={240}>
                 <PieChart>
                   <Pie
                     data={distribution || []}
@@ -425,9 +585,9 @@ export default function DashboardPage() {
                     nameKey="type"
                     cx="50%"
                     cy="45%"
-                    innerRadius={50}
-                    outerRadius={80}
-                    paddingAngle={3}
+                    innerRadius={55}
+                    outerRadius={85}
+                    paddingAngle={4}
                   >
                     {(distribution || []).map((_, i) => (
                       <Cell key={i} fill={COLORS[i % COLORS.length]} />
@@ -435,15 +595,16 @@ export default function DashboardPage() {
                   </Pie>
                   <Tooltip
                     contentStyle={{
-                      background: "hsl(220,15%,13%)",
-                      border: "1px solid hsl(220,15%,22%)",
+                      background: "rgba(13, 15, 22, 0.85)",
+                      backdropFilter: "blur(8px)",
+                      border: "1px solid rgba(255, 255, 255, 0.15)",
                       borderRadius: "8px",
                       fontSize: "12px",
-                      color: "hsl(210,20%,98%)",
+                      color: "rgba(255, 255, 255, 0.9)",
                     }}
                     formatter={(v: any) => [`${v}%`, "Share"]}
                   />
-                  <Legend iconSize={8} wrapperStyle={{ fontSize: "11px" }} />
+                  <Legend iconSize={10} wrapperStyle={{ fontSize: "11px", color: "rgba(255,255,255,0.7)" }} />
                 </PieChart>
               </ResponsiveContainer>
             </CardContent>
@@ -456,46 +617,51 @@ export default function DashboardPage() {
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.45, duration: 0.3 }}
+        className="relative z-10"
       >
-        <Card className="border-border bg-card">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold text-foreground">Recent Analyses</CardTitle>
+        <Card className="glass-card shadow-lg">
+          <CardHeader className="pb-3 border-b border-white/5">
+            <CardTitle className="text-sm font-semibold text-foreground uppercase tracking-wider">Recent Analyses Log</CardTitle>
           </CardHeader>
-          <CardContent className="pt-0">
+          <CardContent className="pt-4">
             {recentAnalyses.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground text-sm">
-                No analyses yet. Upload an image to get started.
+              <div className="text-center py-12 text-slate-400 text-sm font-mono">
+                // No telemetry logs recorded. Initiate image upload.
               </div>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {recentAnalyses.map((analysis) => {
                   const isExpanded = expandedId === analysis.id;
                   return (
                     <div
                       key={analysis.id}
-                      className="border border-border rounded-lg overflow-hidden bg-card"
+                      className={`border rounded-lg overflow-hidden transition-all duration-300 ${
+                        isExpanded
+                          ? "border-cyan-500/30 bg-slate-950/60 shadow-[0_0_20px_rgba(6,182,212,0.08)]"
+                          : "border-white/5 bg-slate-950/20 hover:border-white/15 hover:bg-slate-950/40"
+                      }`}
                       data-testid={`analysis-container-${analysis.id}`}
                     >
                       <div
                         onClick={() => setExpandedId(isExpanded ? null : analysis.id)}
-                        className="flex items-center gap-4 px-3 py-2.5 hover:bg-accent/50 cursor-pointer transition-colors"
+                        className="flex items-center gap-4 px-4 py-3 cursor-pointer select-none"
                         data-testid={`analysis-row-${analysis.id}`}
                       >
-                        <div className="w-8 h-8 rounded-md bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden">
+                        <div className="w-9 h-9 rounded bg-white/5 border border-white/10 flex items-center justify-center flex-shrink-0 overflow-hidden shadow-inner">
                           {analysis.originalImageUrl ? (
-                            <img src={analysis.originalImageUrl} alt="" className="w-8 h-8 object-cover" />
+                            <img src={analysis.originalImageUrl} alt="" className="w-full h-full object-cover transition-transform duration-300 hover:scale-110" />
                           ) : (
-                            <Image className="w-4 h-4 text-muted-foreground" />
+                            <Image className="w-4 h-4 text-slate-400" />
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="text-sm font-medium text-foreground truncate">{analysis.fileName}</div>
-                          <div className="text-xs text-muted-foreground capitalize">{analysis.structureType}</div>
+                          <div className="text-xs text-slate-400 capitalize">{analysis.structureType}</div>
                         </div>
-                        <div className="flex items-center gap-3 flex-shrink-0">
-                          <span className="text-xs text-muted-foreground">{analysis.defectCount ?? 0} defects</span>
+                        <div className="flex items-center gap-4 flex-shrink-0">
+                          <span className="text-xs text-slate-400 font-mono">{analysis.defectCount ?? 0} defects</span>
                           <span
-                            className={`text-xs px-2 py-0.5 rounded-full border capitalize font-medium ${SEVERITY_COLORS[analysis.severity] || SEVERITY_COLORS.none}`}
+                            className={`text-xs px-2 py-0.5 rounded border capitalize font-medium ${SEVERITY_COLORS[analysis.severity] || SEVERITY_COLORS.none}`}
                             data-testid={`severity-${analysis.id}`}
                           >
                             {analysis.severity}
@@ -509,49 +675,49 @@ export default function DashboardPage() {
                             initial={{ height: 0, opacity: 0 }}
                             animate={{ height: "auto", opacity: 1 }}
                             exit={{ height: 0, opacity: 0 }}
-                            transition={{ duration: 0.2 }}
-                            className="border-t border-border bg-accent/5 px-4 py-3 text-xs space-y-2.5 overflow-hidden"
+                            transition={{ duration: 0.25, ease: "easeInOut" }}
+                            className="border-t border-white/5 bg-slate-950/45 px-4 py-4 text-xs space-y-3.5 overflow-hidden"
                           >
                             <div className="flex flex-wrap items-center justify-between gap-4">
-                              <div className="flex gap-4">
+                              <div className="flex flex-wrap gap-x-6 gap-y-2">
                                 <div>
-                                  <span className="text-muted-foreground">Confidence: </span>
-                                  <span className="font-semibold text-foreground">
+                                  <span className="text-slate-400">Confidence: </span>
+                                  <span className="font-semibold text-white">
                                     {analysis.confidenceScore ? `${Math.round(analysis.confidenceScore * 100)}%` : "—"}
                                   </span>
                                 </div>
                                 <div>
-                                  <span className="text-muted-foreground">Speed: </span>
-                                  <span className="font-semibold text-foreground">
+                                  <span className="text-slate-400">Speed: </span>
+                                  <span className="font-semibold text-white">
                                     {analysis.analysisSpeedMs ? `${analysis.analysisSpeedMs}ms` : "—"}
                                   </span>
                                 </div>
                                 <div>
-                                  <span className="text-muted-foreground">Severity: </span>
-                                  <span className="font-semibold text-foreground capitalize">
+                                  <span className="text-slate-400">Severity: </span>
+                                  <span className="font-semibold text-white capitalize">
                                     {analysis.severity}
                                   </span>
                                 </div>
                                 {(analysis as any).materialType && (
                                   <div>
-                                    <span className="text-muted-foreground">Material: </span>
-                                    <span className="font-semibold text-foreground capitalize">
+                                    <span className="text-slate-400">Material: </span>
+                                    <span className="font-semibold text-white capitalize">
                                       {(analysis as any).materialType}
                                     </span>
                                   </div>
                                 )}
                                 {(analysis as any).buildingAge !== null && (analysis as any).buildingAge !== undefined && (
                                   <div>
-                                    <span className="text-muted-foreground">Age: </span>
-                                    <span className="font-semibold text-foreground">
+                                    <span className="text-slate-400">Age: </span>
+                                    <span className="font-semibold text-white">
                                       {(analysis as any).buildingAge} yrs
                                     </span>
                                   </div>
                                 )}
                                 {(analysis as any).numberOfFloors !== null && (analysis as any).numberOfFloors !== undefined && (
                                   <div>
-                                    <span className="text-muted-foreground">Floors: </span>
-                                    <span className="font-semibold text-foreground">
+                                    <span className="text-slate-400">Floors: </span>
+                                    <span className="font-semibold text-white">
                                       {(analysis as any).numberOfFloors}
                                     </span>
                                   </div>
@@ -559,20 +725,20 @@ export default function DashboardPage() {
                                 {(analysis as any).healthScore !== null && (analysis as any).healthScore !== undefined && (() => {
                                   const hs = (analysis as any).healthScore;
                                   let label = "Excellent";
-                                  let color = "text-[hsl(160,84%,39%)] bg-[hsl(160,84%,39%)]/10 border-[hsl(160,84%,39%)]/30";
+                                  let color = "text-emerald-400 bg-emerald-500/10 border-emerald-500/30";
                                   if (hs < 50) {
                                     label = "Critical";
-                                    color = "text-destructive bg-destructive/10 border-destructive/30";
+                                    color = "text-red-400 bg-red-500/10 border-red-500/30";
                                   } else if (hs < 70) {
                                     label = "Moderate";
-                                    color = "text-[hsl(38,92%,50%)] bg-[hsl(38,92%,50%)]/10 border-[hsl(38,92%,50%)]/30";
+                                    color = "text-amber-400 bg-amber-500/10 border-amber-500/30";
                                   } else if (hs < 90) {
                                     label = "Good";
-                                    color = "text-[hsl(189,94%,43%)] bg-[hsl(189,94%,43%)]/10 border-[hsl(189,94%,43%)]/30";
+                                    color = "text-cyan-400 bg-cyan-500/10 border-cyan-500/30";
                                   }
                                   return (
                                     <div>
-                                      <span className="text-muted-foreground">Health Score: </span>
+                                      <span className="text-slate-400">Health Score: </span>
                                       <span className={`px-2 py-0.5 rounded-full border text-[10px] font-bold ${color}`}>
                                         {hs} - {label}
                                       </span>
@@ -581,16 +747,16 @@ export default function DashboardPage() {
                                 })()}
                                 {(analysis as any).buildingName && (
                                   <div>
-                                    <span className="text-muted-foreground">Building: </span>
-                                    <span className="font-semibold text-foreground">
+                                    <span className="text-slate-400">Building: </span>
+                                    <span className="font-semibold text-white">
                                       {(analysis as any).buildingName}
                                     </span>
                                   </div>
                                 )}
                                 {(analysis as any).address && (
                                   <div>
-                                    <span className="text-muted-foreground">Location: </span>
-                                    <span className="font-semibold text-foreground">
+                                    <span className="text-slate-400">Location: </span>
+                                    <span className="font-semibold text-white">
                                       {(analysis as any).address}
                                       {(analysis as any).city ? `, ${(analysis as any).city}` : ""}
                                     </span>
@@ -598,8 +764,8 @@ export default function DashboardPage() {
                                 )}
                                 {(analysis as any).latitude !== null && (analysis as any).latitude !== undefined && (
                                   <div>
-                                    <span className="text-muted-foreground">GPS: </span>
-                                    <span className="font-semibold text-foreground">
+                                    <span className="text-slate-400">GPS: </span>
+                                    <span className="font-semibold text-white font-mono">
                                       {Number((analysis as any).latitude).toFixed(4)}, {Number((analysis as any).longitude).toFixed(4)}
                                     </span>
                                   </div>
@@ -611,13 +777,13 @@ export default function DashboardPage() {
                                   <img
                                     src={analysis.originalImageUrl}
                                     alt="Analysis Preview"
-                                    className="w-16 h-12 object-cover rounded border border-border bg-muted"
+                                    className="w-16 h-12 object-cover rounded border border-white/10 bg-slate-900"
                                   />
                                 )}
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  className="h-8 text-xs border-primary text-primary hover:bg-primary/10"
+                                  className="h-8 text-xs border-cyan-500/40 text-cyan-400 hover:bg-cyan-500/10 hover:text-cyan-300"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     handleDownloadPDF(analysis.id);
@@ -640,10 +806,10 @@ export default function DashboardPage() {
                                 const parsed = JSON.parse(analysis.defectTypes);
                                 if (Array.isArray(parsed) && parsed.length > 0) {
                                   return (
-                                    <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                                      <span className="text-muted-foreground mr-1">Defect Types:</span>
+                                    <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-white/5">
+                                      <span className="text-slate-400 mr-1">Defect Types:</span>
                                       {parsed.map((dt: string) => (
-                                        <Badge key={dt} variant="outline" className="text-[10px] py-0 px-1.5 capitalize">
+                                        <Badge key={dt} variant="outline" className="text-[10px] py-0 px-2 capitalize border-white/10 text-slate-300">
                                           {dt.replace(/_/g, " ")}
                                         </Badge>
                                       ))}

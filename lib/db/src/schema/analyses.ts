@@ -26,6 +26,11 @@ export const analysesTable = pgTable("analyses", {
   city: text("city"),
   latitude: real("latitude"),
   longitude: real("longitude"),
+  previousOriginalImageUrl: text("previous_original_image_url"),
+  previousMaskedImageUrl: text("previous_masked_image_url"),
+  previousSeverity: text("previous_severity"),
+  previousHealthScore: integer("previous_health_score"),
+  previousDefectCount: integer("previous_defect_count"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

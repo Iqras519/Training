@@ -43,6 +43,7 @@ interface AnalysisResult {
   city?: string | null;
   latitude?: number | null;
   longitude?: number | null;
+  createdAt?: string;
   recommendations?: {
     id: number;
     severity: string;
@@ -58,9 +59,23 @@ interface ResultLocationMapProps {
   buildingName?: string | null;
   address?: string | null;
   severity?: string | null;
+  structureType?: string | null;
+  materialType?: string | null;
+  confidenceScore?: number | null;
+  createdAt?: string | null;
 }
 
-function ResultLocationMap({ lat, lng, buildingName, address, severity }: ResultLocationMapProps) {
+function ResultLocationMap({ 
+  lat, 
+  lng, 
+  buildingName, 
+  address, 
+  severity,
+  structureType,
+  materialType,
+  confidenceScore,
+  createdAt 
+}: ResultLocationMapProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
 
@@ -76,25 +91,75 @@ function ResultLocationMap({ lat, lng, buildingName, address, severity }: Result
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     }).addTo(map);
 
-    // Marker styling/icon fallback for Leaflet in webpack/vite environments
-    const markerIcon = L.icon({
-      iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-      shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-      iconSize: [25, 41],
-      iconAnchor: [12, 41],
-      popupAnchor: [1, -34],
+    // Severity-based marker colors:
+    let markerColor = "#22c55e"; // Green for Low/None
+    if (severity === "high") {
+      markerColor = "#ef4444"; // Red
+    } else if (severity === "medium") {
+      markerColor = "#eab308"; // Yellow
+    }
+
+    const customIcon = L.divIcon({
+      html: `
+        <div style="
+          position: relative;
+          width: 24px;
+          height: 24px;
+          background-color: ${markerColor};
+          border: 2px solid white;
+          border-radius: 50%;
+          box-shadow: 0 0 10px rgba(0,0,0,0.5);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        ">
+          <div style="
+            width: 8px;
+            height: 8px;
+            background-color: white;
+            border-radius: 50%;
+          "></div>
+        </div>
+      `,
+      className: "custom-map-pin",
+      iconSize: [24, 24],
+      iconAnchor: [12, 12],
+      popupAnchor: [0, -12],
     });
 
-    const severityLabel = severity ? severity.toUpperCase() : "NONE";
+    const formatDate = (dateStr: string | Date) => {
+      const date = new Date(dateStr);
+      const day = String(date.getDate()).padStart(2, "0");
+      const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      const month = months[date.getMonth()];
+      const year = date.getFullYear();
+      return `${day}-${month}-${year}`;
+    };
+
+    const capitalize = (str: string) => {
+      if (!str) return "—";
+      return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+    };
+
+    const buildingNameVal = buildingName || "Inspection Location";
+    const structTypeVal = structureType ? capitalize(structureType) : "Building";
+    const materialTypeVal = materialType ? capitalize(materialType) : "Unknown";
+    const severityVal = severity ? capitalize(severity) : "None";
+    const confidenceVal = confidenceScore ? `${Math.round(confidenceScore * 100)}%` : "—";
+    const dateVal = createdAt ? formatDate(createdAt) : formatDate(new Date());
+
     const popupContent = `
-      <div class="text-xs p-1 text-slate-800">
-        <h4 class="font-bold text-sm text-slate-900">${buildingName || "Building Location"}</h4>
-        ${address ? `<p class="mt-1">${address}</p>` : ""}
-        <p class="mt-1.5 font-semibold text-slate-700">Inspection: <span class="px-1.5 py-0.5 rounded text-[10px] uppercase bg-slate-100">${severityLabel} Severity</span></p>
+      <div class="text-xs p-1 text-slate-800 font-sans leading-relaxed" style="min-width: 140px;">
+        <h4 class="font-bold text-sm text-slate-900" style="margin: 0 0 4px 0;">${buildingNameVal}</h4>
+        <p style="margin: 0; color: #475569;">${structTypeVal}</p>
+        <p style="margin: 0; color: #475569;">${materialTypeVal}</p>
+        <p style="margin: 4px 0 0 0; font-weight: 500;">Severity: <span style="font-weight: 600; color: ${markerColor};">${severityVal}</span></p>
+        <p style="margin: 0; font-weight: 500;">Confidence: <span class="text-slate-900">${confidenceVal}</span></p>
+        <p style="margin: 0; font-weight: 500;">Date: <span class="text-slate-900">${dateVal}</span></p>
       </div>
     `;
 
-    L.marker([lat, lng], { icon: markerIcon })
+    L.marker([lat, lng], { icon: customIcon })
       .addTo(map)
       .bindPopup(popupContent)
       .openPopup();
@@ -109,7 +174,7 @@ function ResultLocationMap({ lat, lng, buildingName, address, severity }: Result
         mapRef.current = null;
       }
     };
-  }, [lat, lng, buildingName, address, severity]);
+  }, [lat, lng, buildingName, address, severity, structureType, materialType, confidenceScore, createdAt]);
 
   return (
     <div ref={mapContainerRef} className="w-full h-[200px] rounded-lg border border-border overflow-hidden" />
@@ -227,21 +292,24 @@ export default function UploadPage() {
     }
   }, []);
 
-  const handleDetectLocation = () => {
+  const handleUseCurrentLocation = () => {
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           setLatitude(String(pos.coords.latitude.toFixed(6)));
           setLongitude(String(pos.coords.longitude.toFixed(6)));
           toast({
-            title: "Location detected",
+            title: "Location captured successfully.",
             description: `Coordinates updated: ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`,
           });
         },
         (error) => {
+          const description = error.code === error.PERMISSION_DENIED
+            ? "Geolocation permission denied by user."
+            : error.message || "Could not retrieve current location.";
           toast({
             title: "Geolocation failed",
-            description: error.message || "Could not detect location. Please enter coordinates manually.",
+            description,
             variant: "destructive",
           });
         }
@@ -476,22 +544,23 @@ export default function UploadPage() {
             </div>
           </div>
 
-          {/* Building Location Details */}
+          {/* Inspection Location */}
           <div className="space-y-4 p-4 border border-border rounded-xl bg-card">
             <div className="flex items-center justify-between">
               <h3 className="text-xs font-semibold text-foreground uppercase tracking-wide">
-                Building Location Details
+                Inspection Location
               </h3>
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={handleDetectLocation}
+                onClick={handleUseCurrentLocation}
                 disabled={isAnalyzing}
                 className="h-7 text-[10px] px-2 flex items-center gap-1"
+                data-testid="use-current-location-button"
               >
                 <MapPin className="w-3.5 h-3.5" />
-                Detect My Location
+                Use Current Location
               </Button>
             </div>
             
@@ -510,34 +579,18 @@ export default function UploadPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                {/* Address */}
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">
-                    Address
-                  </label>
-                  <Input
-                    placeholder="e.g. 350 5th Ave"
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                    disabled={isAnalyzing}
-                    className="h-9"
-                  />
-                </div>
-
-                {/* City */}
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">
-                    City
-                  </label>
-                  <Input
-                    placeholder="e.g. New York"
-                    value={city}
-                    onChange={(e) => setCity(e.target.value)}
-                    disabled={isAnalyzing}
-                    className="h-9"
-                  />
-                </div>
+              {/* Address */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">
+                  Address
+                </label>
+                <Input
+                  placeholder="e.g. 350 5th Ave"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  disabled={isAnalyzing}
+                  className="h-9"
+                />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -896,6 +949,10 @@ export default function UploadPage() {
                           buildingName={result.buildingName}
                           address={result.address}
                           severity={result.severity}
+                          structureType={result.structureType}
+                          materialType={result.materialType}
+                          confidenceScore={result.confidenceScore}
+                          createdAt={result.createdAt}
                         />
                         <div className="text-[10px] text-muted-foreground leading-relaxed mt-2 p-2 rounded bg-muted/20 border border-border/40">
                           <span className="font-semibold text-foreground">Coordinates:</span> {Number(result.latitude).toFixed(6)}, {Number(result.longitude).toFixed(6)}

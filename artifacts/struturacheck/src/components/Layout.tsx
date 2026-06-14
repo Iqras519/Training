@@ -176,7 +176,7 @@ export default function Layout({ children }: { children: ReactNode }) {
       <motion.aside
         animate={{ width: collapsed ? 72 : 240 }}
         transition={{ duration: 0.25, ease: "easeInOut" }}
-        className="relative flex-shrink-0 flex flex-col bg-slate-950/92 backdrop-blur-2xl border-r border-white/5 z-20"
+        className="relative flex-shrink-0 flex flex-col bg-slate-950/45 backdrop-blur-xl border-r border-white/5 z-20"
         data-testid="sidebar"
       >
         {/* Logo */}

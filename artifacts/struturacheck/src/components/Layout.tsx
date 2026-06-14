@@ -329,7 +329,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto bg-slate-950 neon-app-bg blueprint-grid relative z-10">
+        <main className="flex-1 overflow-y-auto neon-app-bg blueprint-grid relative z-10">
           <FloatingParticles />
           <motion.div
             key={location}

@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Eye, EyeOff, Github, Loader2, ShieldCheck } from "lucide-react";
+import { Eye, EyeOff, Github, Loader2, ShieldCheck, Mail, Lock, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -224,12 +224,22 @@ export default function LoginPage() {
       </div>
 
       {/* Right Panel - Auth Card */}
-      <div className="flex-1 flex items-center justify-center p-6 sm:p-12 relative blueprint-grid z-20 bg-[#06070a]">
+      <div className="flex-1 flex items-center justify-center p-6 sm:p-12 relative blueprint-grid z-20 bg-[#080f1e] overflow-hidden">
+        {/* Soft blue ambient lighting */}
+        <div className="absolute top-1/4 left-1/4 w-[350px] h-[350px] bg-cyan-500/8 rounded-full blur-[120px] pointer-events-none z-0" />
+        <div className="absolute bottom-1/4 right-1/4 w-[350px] h-[350px] bg-indigo-500/8 rounded-full blur-[140px] pointer-events-none z-0" />
+
         <motion.div
           initial={{ opacity: 0, scale: 0.96 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.4 }}
-          className="w-full max-w-md backdrop-blur-xl bg-slate-900/35 border border-white/5 rounded-2xl p-8 shadow-[0_20px_50px_rgba(0,0,0,0.55),0_0_30px_rgba(6,182,212,0.03)] relative"
+          style={{
+            background: "rgba(8, 18, 35, 0.75)",
+            backdropFilter: "blur(24px)",
+            WebkitBackdropFilter: "blur(24px)",
+            border: "1px solid rgba(80, 180, 255, 0.25)",
+          }}
+          className="w-full max-w-md rounded-[24px] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.5),0_0_30px_rgba(34,211,238,0.12)] relative z-10"
         >
           {/* Logo for mobile */}
           <div className="lg:hidden flex items-center gap-2.5 mb-8">
@@ -240,14 +250,14 @@ export default function LoginPage() {
           </div>
 
           {/* Tab Toggle */}
-          <div className="flex gap-1 p-1 bg-slate-950/65 border border-white/5 rounded-xl mb-6">
+          <div className="flex gap-1 p-1 bg-slate-950/40 border border-white/5 rounded-xl mb-6">
             {["Sign In", "Create Account"].map((tab, i) => (
               <button
                 key={tab}
                 onClick={() => setIsLogin(i === 0)}
-                className={`flex-1 py-1.5 text-[10px] font-bold rounded-lg font-mono uppercase tracking-widest transition-all duration-300 ${
+                className={`flex-1 py-2 text-xs font-semibold rounded-lg font-sans uppercase tracking-wider transition-all duration-300 ${
                   isLogin === (i === 0)
-                    ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-[0_0_12px_rgba(6,182,212,0.1)]"
+                    ? "bg-cyan-500/10 text-cyan-400 border border-cyan-400/40 shadow-[0_0_12px_rgba(34,211,238,0.2)]"
                     : "text-slate-400 hover:text-white border border-transparent"
                 }`}
                 data-testid={i === 0 ? "tab-signin" : "tab-register"}
@@ -267,59 +277,85 @@ export default function LoginPage() {
                 transition={{ duration: 0.25 }}
               >
                 <div className="mb-6">
-                  <h2 className="text-xl font-bold text-white tracking-tight">Welcome back</h2>
-                  <p className="text-xs text-slate-400 font-mono mt-1">// Sign in to structural telemetry panel</p>
+                  <h2 className="text-2xl font-bold text-white tracking-tight">Welcome back</h2>
+                  <p className="text-sm text-slate-400 mt-1 font-medium">Sign in to your account</p>
                 </div>
 
                 <form onSubmit={loginForm.handleSubmit(onLogin)} className="space-y-4">
                   <div className="space-y-1.5">
                     <Label htmlFor="email" className="text-slate-400 text-[10px] font-bold uppercase tracking-wider font-mono">Email Address</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="engineer@company.com"
-                      className="bg-slate-950/60 border-white/10 text-white placeholder:text-slate-500 rounded-lg h-9 focus:border-cyan-500/40 focus:ring-1 focus:ring-cyan-500/30 transition-all duration-300"
-                      data-testid="input-email"
-                      {...loginForm.register("email")}
-                    />
+                    <div className="relative">
+                      <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400" />
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="engineer@company.com"
+                        className="bg-[#060c18]/80 border-cyan-500/20 text-white placeholder:text-slate-500 rounded-xl h-11 pl-10 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/30 transition-all duration-300"
+                        data-testid="input-email"
+                        {...loginForm.register("email")}
+                      />
+                    </div>
                     {loginForm.formState.errors.email && (
-                      <p className="text-xs text-red-400">{loginForm.formState.errors.email.message}</p>
+                      <p className="text-xs text-red-400 mt-1">{loginForm.formState.errors.email.message}</p>
                     )}
                   </div>
 
                   <div className="space-y-1.5">
                     <Label htmlFor="password" className="text-slate-400 text-[10px] font-bold uppercase tracking-wider font-mono">Password</Label>
                     <div className="relative">
+                      <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400" />
                       <Input
                         id="password"
                         type={showPassword ? "text" : "password"}
                         placeholder="••••••••"
-                        className="bg-slate-950/60 border-white/10 text-white placeholder:text-slate-500 rounded-lg h-9 focus:border-cyan-500/40 focus:ring-1 focus:ring-cyan-500/30 transition-all duration-300 pr-10"
+                        className="bg-[#060c18]/80 border-cyan-500/20 text-white placeholder:text-slate-500 rounded-xl h-11 pl-10 pr-10 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/30 transition-all duration-300"
                         data-testid="input-password"
                         {...loginForm.register("password")}
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors"
+                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors"
                         data-testid="toggle-password"
                       >
                         {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
                     </div>
                     {loginForm.formState.errors.password && (
-                      <p className="text-xs text-red-400">{loginForm.formState.errors.password.message}</p>
+                      <p className="text-xs text-red-400 mt-1">{loginForm.formState.errors.password.message}</p>
                     )}
+                  </div>
+
+                  {/* Checkbox + Forgot Password */}
+                  <div className="flex items-center justify-between pt-1">
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id="remember-me"
+                        className="w-4 h-4 rounded border-slate-700 bg-slate-950 text-cyan-400 accent-cyan-400 focus:ring-cyan-400/30 cursor-pointer"
+                      />
+                      <label htmlFor="remember-me" className="text-xs text-slate-300 select-none cursor-pointer">
+                        Remember me
+                      </label>
+                    </div>
+                    <button
+                      type="button"
+                      className="text-xs text-cyan-400 hover:text-cyan-300 transition-colors font-semibold"
+                      onClick={() => toast({ title: "Reset link sent", description: "A password reset link has been dispatched to your email address." })}
+                    >
+                      Forgot password?
+                    </button>
                   </div>
 
                   <Button
                     type="submit"
-                    className="w-full bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-slate-950 font-bold border-0 h-10 shadow-[0_0_15px_rgba(6,182,212,0.2)] hover:shadow-[0_0_20px_rgba(6,182,212,0.35)] transition-all duration-300 rounded-lg mt-2"
+                    className="w-full bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-600 hover:from-cyan-300 hover:via-blue-400 hover:to-indigo-500 text-slate-950 font-bold border-0 h-11 shadow-[0_0_15px_rgba(6,182,212,0.25)] hover:shadow-[0_0_22px_rgba(6,182,212,0.4)] transition-all duration-300 rounded-xl mt-4 flex items-center justify-center gap-2 group"
                     disabled={loginMutation.isPending}
                     data-testid="button-signin"
                   >
                     {loginMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                    Sign In
+                    <span>Sign In</span>
+                    <span className="transition-transform duration-200 group-hover:translate-x-1">→</span>
                   </Button>
                 </form>
 
@@ -328,7 +364,7 @@ export default function LoginPage() {
                     <div className="w-full border-t border-white/5" />
                   </div>
                   <div className="relative flex justify-center text-[10px] uppercase font-mono">
-                    <span className="px-3 bg-[#06070a]/80 backdrop-blur-md text-slate-500">or continue with</span>
+                    <span className="px-3 bg-[#080f1e]/80 backdrop-blur-md text-slate-500">or continue with</span>
                   </div>
                 </div>
 
@@ -340,7 +376,7 @@ export default function LoginPage() {
                     <button
                       key={label}
                       type="button"
-                      className="flex items-center justify-center gap-2 py-2 px-4 rounded-lg border border-white/5 bg-slate-950/40 text-slate-300 hover:border-white/15 hover:text-white hover:bg-slate-950/60 transition-all text-xs font-semibold"
+                      className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-white/5 bg-slate-950/30 text-slate-300 hover:border-white/15 hover:text-white hover:bg-slate-950/50 hover:-translate-y-0.5 transition-all text-xs font-semibold shadow-sm"
                       data-testid={`oauth-${label.toLowerCase()}`}
                     >
                       {typeof icon === "string" ? (
@@ -349,6 +385,12 @@ export default function LoginPage() {
                       {label}
                     </button>
                   ))}
+                </div>
+
+                {/* Bottom Security Text */}
+                <div className="mt-8 flex items-center justify-center gap-2 text-[10px] text-slate-400/90 font-medium">
+                  <Lock className="w-3 h-3 text-slate-400/70" />
+                  <span>Secure authentication powered by <span className="text-cyan-400 font-semibold">VisionBuild</span></span>
                 </div>
               </motion.div>
             ) : (
@@ -360,81 +402,98 @@ export default function LoginPage() {
                 transition={{ duration: 0.25 }}
               >
                 <div className="mb-6">
-                  <h2 className="text-xl font-bold text-white tracking-tight">Create account</h2>
-                  <p className="text-xs text-slate-400 font-mono mt-1">// Join the VisionBuild telemetry network</p>
+                  <h2 className="text-2xl font-bold text-white tracking-tight">Create account</h2>
+                  <p className="text-sm text-slate-400 mt-1 font-medium">Join the VisionBuild telemetry network</p>
                 </div>
 
                 <form onSubmit={registerForm.handleSubmit(onRegister)} className="space-y-3.5">
                   <div className="space-y-1.5">
                     <Label className="text-slate-400 text-[10px] font-bold uppercase tracking-wider font-mono">Full Name</Label>
-                    <Input
-                      placeholder="Jane Smith"
-                      className="bg-slate-950/60 border-white/10 text-white placeholder:text-slate-500 rounded-lg h-9 focus:border-cyan-500/40 focus:ring-1 focus:ring-cyan-500/30 transition-all duration-300"
-                      data-testid="input-name"
-                      {...registerForm.register("name")}
-                    />
+                    <div className="relative">
+                      <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400" />
+                      <Input
+                        placeholder="Jane Smith"
+                        className="bg-[#060c18]/80 border-cyan-500/20 text-white placeholder:text-slate-500 rounded-xl h-11 pl-10 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/30 transition-all duration-300"
+                        data-testid="input-name"
+                        {...registerForm.register("name")}
+                      />
+                    </div>
                     {registerForm.formState.errors.name && (
-                      <p className="text-xs text-red-400">{registerForm.formState.errors.name.message}</p>
+                      <p className="text-xs text-red-400 mt-1">{registerForm.formState.errors.name.message}</p>
                     )}
                   </div>
 
                   <div className="space-y-1.5">
                     <Label className="text-slate-400 text-[10px] font-bold uppercase tracking-wider font-mono">Email Address</Label>
-                    <Input
-                      type="email"
-                      placeholder="engineer@company.com"
-                      className="bg-slate-950/60 border-white/10 text-white placeholder:text-slate-500 rounded-lg h-9 focus:border-cyan-500/40 focus:ring-1 focus:ring-cyan-500/30 transition-all duration-300"
-                      data-testid="input-register-email"
-                      {...registerForm.register("email")}
-                    />
+                    <div className="relative">
+                      <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400" />
+                      <Input
+                        type="email"
+                        placeholder="engineer@company.com"
+                        className="bg-[#060c18]/80 border-cyan-500/20 text-white placeholder:text-slate-500 rounded-xl h-11 pl-10 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/30 transition-all duration-300"
+                        data-testid="input-register-email"
+                        {...registerForm.register("email")}
+                      />
+                    </div>
                     {registerForm.formState.errors.email && (
-                      <p className="text-xs text-red-400">{registerForm.formState.errors.email.message}</p>
+                      <p className="text-xs text-red-400 mt-1">{registerForm.formState.errors.email.message}</p>
                     )}
                   </div>
 
                   <div className="space-y-1.5">
                     <Label className="text-slate-400 text-[10px] font-bold uppercase tracking-wider font-mono">Role Profile</Label>
-                    <Input
-                      placeholder="Structural Engineer"
-                      className="bg-slate-950/60 border-white/10 text-white placeholder:text-slate-500 rounded-lg h-9 focus:border-cyan-500/40 focus:ring-1 focus:ring-cyan-500/30 transition-all duration-300"
-                      data-testid="input-role"
-                      {...registerForm.register("role")}
-                    />
+                    <div className="relative">
+                      <ShieldCheck className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400" />
+                      <Input
+                        placeholder="Structural Engineer"
+                        className="bg-[#060c18]/80 border-[#10203e]/40 border-cyan-500/20 text-white placeholder:text-slate-500 rounded-xl h-11 pl-10 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/30 transition-all duration-300"
+                        data-testid="input-role"
+                        {...registerForm.register("role")}
+                      />
+                    </div>
                   </div>
 
                   <div className="space-y-1.5">
                     <Label className="text-slate-400 text-[10px] font-bold uppercase tracking-wider font-mono">Password</Label>
                     <div className="relative">
+                      <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400" />
                       <Input
                         type={showPassword ? "text" : "password"}
                         placeholder="Min. 6 characters"
-                        className="bg-slate-950/60 border-white/10 text-white placeholder:text-slate-500 rounded-lg h-9 focus:border-cyan-500/40 focus:ring-1 focus:ring-cyan-500/30 transition-all duration-300 pr-10"
+                        className="bg-[#060c18]/80 border-cyan-500/20 text-white placeholder:text-slate-500 rounded-xl h-11 pl-10 pr-10 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/30 transition-all duration-300"
                         data-testid="input-register-password"
                         {...registerForm.register("password")}
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"
+                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"
                       >
                         {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
                     </div>
                     {registerForm.formState.errors.password && (
-                      <p className="text-xs text-red-400">{registerForm.formState.errors.password.message}</p>
+                      <p className="text-xs text-red-400 mt-1">{registerForm.formState.errors.password.message}</p>
                     )}
                   </div>
 
                   <Button
                     type="submit"
-                    className="w-full bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-slate-950 font-bold border-0 h-10 shadow-[0_0_15px_rgba(6,182,212,0.2)] hover:shadow-[0_0_20px_rgba(6,182,212,0.35)] transition-all duration-300 rounded-lg mt-3"
+                    className="w-full bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-600 hover:from-cyan-300 hover:via-blue-400 hover:to-indigo-500 text-slate-950 font-bold border-0 h-11 shadow-[0_0_15px_rgba(6,182,212,0.25)] hover:shadow-[0_0_22px_rgba(6,182,212,0.4)] transition-all duration-300 rounded-xl mt-4 flex items-center justify-center gap-2 group"
                     disabled={registerMutation.isPending}
                     data-testid="button-register"
                   >
                     {registerMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                    Create Account
+                    <span>Create Account</span>
+                    <span className="transition-transform duration-200 group-hover:translate-x-1">→</span>
                   </Button>
                 </form>
+
+                {/* Bottom Security Text */}
+                <div className="mt-8 flex items-center justify-center gap-2 text-[10px] text-slate-400/90 font-medium">
+                  <Lock className="w-3 h-3 text-slate-400/70" />
+                  <span>Secure authentication powered by <span className="text-cyan-400 font-semibold">VisionBuild</span></span>
+                </div>
               </motion.div>
             )}
           </AnimatePresence>

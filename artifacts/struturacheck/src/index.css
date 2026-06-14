@@ -456,3 +456,59 @@
   background-color: rgba(30, 34, 44, 0.9) !important;
 }
 
+/* Unified Neon App Background */
+.neon-app-bg {
+  background-image: linear-gradient(rgba(10, 11, 16, 0.8), rgba(6, 7, 10, 0.92)), url('/neon-bg.jpg') !important;
+  background-size: cover !important;
+  background-position: center !important;
+  background-attachment: fixed !important;
+  background-repeat: no-repeat !important;
+}
+
+/* Severity-based Glass Cards */
+.glass-card-critical {
+  background: rgba(13, 15, 22, 0.4) !important;
+  backdrop-filter: blur(16px) saturate(140%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(140%) !important;
+  border: 1px solid rgba(239, 68, 68, 0.25) !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37), 0 0 15px 0 rgba(239, 68, 68, 0.12) !important;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+.glass-card-critical:hover {
+  background: rgba(17, 20, 28, 0.5) !important;
+  border-color: rgba(239, 68, 68, 0.45) !important;
+  box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.5), 0 0 25px 0 rgba(239, 68, 68, 0.22) !important;
+  transform: translateY(-2px);
+}
+
+.glass-card-warning {
+  background: rgba(13, 15, 22, 0.4) !important;
+  backdrop-filter: blur(16px) saturate(140%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(140%) !important;
+  border: 1px solid rgba(245, 158, 11, 0.25) !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37), 0 0 15px 0 rgba(245, 158, 11, 0.12) !important;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+.glass-card-warning:hover {
+  background: rgba(17, 20, 28, 0.5) !important;
+  border-color: rgba(245, 158, 11, 0.45) !important;
+  box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.5), 0 0 25px 0 rgba(245, 158, 11, 0.22) !important;
+  transform: translateY(-2px);
+}
+
+.glass-card-safe {
+  background: rgba(13, 15, 22, 0.4) !important;
+  backdrop-filter: blur(16px) saturate(140%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(140%) !important;
+  border: 1px solid rgba(16, 185, 129, 0.2) !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37), 0 0 15px 0 rgba(16, 185, 129, 0.08) !important;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+.glass-card-safe:hover {
+  background: rgba(17, 20, 28, 0.5) !important;
+  border-color: rgba(16, 185, 129, 0.35) !important;
+  box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.5), 0 0 25px 0 rgba(16, 185, 129, 0.18) !important;
+  transform: translateY(-2px);
+}
+
+

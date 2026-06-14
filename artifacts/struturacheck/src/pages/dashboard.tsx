@@ -217,117 +217,6 @@ function SparkLine({ data, color }: { data: number[]; color: string }) {
 const container = { hidden: {}, show: { transition: { staggerChildren: 0.08 } } };
 const item = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { duration: 0.3 } } };
 
-function FloatingParticles() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    let animationFrameId: number;
-    let particles: Array<{
-      x: number;
-      y: number;
-      size: number;
-      speedY: number;
-      speedX: number;
-      opacity: number;
-      color: string;
-    }> = [];
-
-    const colors = [
-      "rgba(6, 182, 212, 0.25)",  // Cyan
-      "rgba(16, 185, 129, 0.2)",  // Emerald
-      "rgba(99, 102, 241, 0.22)", // Indigo
-    ];
-
-    const resizeCanvas = () => {
-      if (!canvas.parentElement) return;
-      canvas.width = canvas.parentElement.clientWidth;
-      canvas.height = canvas.parentElement.clientHeight;
-    };
-
-    resizeCanvas();
-    const resizeObserver = new ResizeObserver(() => resizeCanvas());
-    if (canvas.parentElement) {
-      resizeObserver.observe(canvas.parentElement);
-    }
-
-    const createParticle = () => {
-      const size = Math.random() * 1.5 + 0.5;
-      const x = Math.random() * canvas.width;
-      const y = canvas.height + 10;
-      const speedY = -(Math.random() * 0.3 + 0.1);
-      const speedX = (Math.random() - 0.5) * 0.15;
-      const opacity = Math.random() * 0.3 + 0.08;
-      const color = colors[Math.floor(Math.random() * colors.length)];
-
-      particles.push({ x, y, size, speedY, speedX, opacity, color });
-    };
-
-    const initParticles = () => {
-      const count = Math.min(30, Math.floor((canvas.width * canvas.height) / 40000));
-      for (let i = 0; i < count; i++) {
-        const size = Math.random() * 1.5 + 0.5;
-        const x = Math.random() * canvas.width;
-        const y = Math.random() * canvas.height;
-        const speedY = -(Math.random() * 0.3 + 0.1);
-        const speedX = (Math.random() - 0.5) * 0.15;
-        const opacity = Math.random() * 0.3 + 0.08;
-        const color = colors[Math.floor(Math.random() * colors.length)];
-        particles.push({ x, y, size, speedY, speedX, opacity, color });
-      }
-    };
-
-    initParticles();
-
-    const drawParticles = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      if (particles.length < 35 && Math.random() < 0.02) {
-        createParticle();
-      }
-
-      for (let i = particles.length - 1; i >= 0; i--) {
-        const p = particles[i];
-        p.y += p.speedY;
-        p.x += p.speedX;
-
-        if (p.x < 0) p.x = canvas.width;
-        if (p.x > canvas.width) p.x = 0;
-
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fillStyle = p.color;
-        ctx.globalAlpha = p.opacity;
-        ctx.fill();
-
-        if (p.y < -10) {
-          particles.splice(i, 1);
-        }
-      }
-
-      ctx.globalAlpha = 1.0;
-      animationFrameId = requestAnimationFrame(drawParticles);
-    };
-
-    drawParticles();
-
-    return () => {
-      cancelAnimationFrame(animationFrameId);
-      resizeObserver.disconnect();
-    };
-  }, []);
-
-  return (
-    <canvas
-      ref={canvasRef}
-      className="absolute inset-0 pointer-events-none z-0"
-    />
-  );
-}
 
 function AnimatedCounter({ value }: { value: number }) {
   const [count, setCount] = useState(0);
@@ -404,8 +293,7 @@ export default function DashboardPage() {
   const sparklineData = history?.slice(-8).map((h) => h.defectsFound) || [0, 2, 1, 3, 2, 4, 3, 5];
 
   return (
-    <div className="relative min-h-full animated-dark-bg blueprint-grid p-6 sm:p-8 space-y-8 overflow-hidden z-10">
-      <FloatingParticles />
+    <div className="relative min-h-full p-6 sm:p-8 space-y-8 z-10">
 
       {/* KPI Cards */}
       <motion.div

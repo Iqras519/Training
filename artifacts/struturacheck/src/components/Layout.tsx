@@ -1,4 +1,4 @@
-import { useState, ReactNode } from "react";
+import { useState, useEffect, useRef, ReactNode } from "react";
 import { Link, useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -12,7 +12,6 @@ import {
   Bell,
   LogOut,
   User,
-  Menu,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -43,6 +42,118 @@ const PAGE_TITLES: Record<string, string> = {
   "/settings": "Settings",
 };
 
+function FloatingParticles() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    let animationFrameId: number;
+    let particles: Array<{
+      x: number;
+      y: number;
+      size: number;
+      speedY: number;
+      speedX: number;
+      opacity: number;
+      color: string;
+    }> = [];
+
+    const colors = [
+      "rgba(6, 182, 212, 0.25)",  // Cyan
+      "rgba(16, 185, 129, 0.2)",  // Emerald
+      "rgba(99, 102, 241, 0.22)", // Indigo
+    ];
+
+    const resizeCanvas = () => {
+      if (!canvas.parentElement) return;
+      canvas.width = canvas.parentElement.clientWidth;
+      canvas.height = canvas.parentElement.clientHeight;
+    };
+
+    resizeCanvas();
+    const resizeObserver = new ResizeObserver(() => resizeCanvas());
+    if (canvas.parentElement) {
+      resizeObserver.observe(canvas.parentElement);
+    }
+
+    const createParticle = () => {
+      const size = Math.random() * 1.5 + 0.5;
+      const x = Math.random() * canvas.width;
+      const y = canvas.height + 10;
+      const speedY = -(Math.random() * 0.3 + 0.1);
+      const speedX = (Math.random() - 0.5) * 0.15;
+      const opacity = Math.random() * 0.3 + 0.08;
+      const color = colors[Math.floor(Math.random() * colors.length)];
+
+      particles.push({ x, y, size, speedY, speedX, opacity, color });
+    };
+
+    const initParticles = () => {
+      const count = Math.min(35, Math.floor((canvas.width * canvas.height) / 40000));
+      for (let i = 0; i < count; i++) {
+        const size = Math.random() * 1.5 + 0.5;
+        const x = Math.random() * canvas.width;
+        const y = Math.random() * canvas.height;
+        const speedY = -(Math.random() * 0.3 + 0.1);
+        const speedX = (Math.random() - 0.5) * 0.15;
+        const opacity = Math.random() * 0.3 + 0.08;
+        const color = colors[Math.floor(Math.random() * colors.length)];
+        particles.push({ x, y, size, speedY, speedX, opacity, color });
+      }
+    };
+
+    initParticles();
+
+    const drawParticles = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      if (particles.length < 40 && Math.random() < 0.02) {
+        createParticle();
+      }
+
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.y += p.speedY;
+        p.x += p.speedX;
+
+        if (p.x < 0) p.x = canvas.width;
+        if (p.x > canvas.width) p.x = 0;
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = p.opacity;
+        ctx.fill();
+
+        if (p.y < -10) {
+          particles.splice(i, 1);
+        }
+      }
+
+      ctx.globalAlpha = 1.0;
+      animationFrameId = requestAnimationFrame(drawParticles);
+    };
+
+    drawParticles();
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+      resizeObserver.disconnect();
+    };
+  }, []);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="absolute inset-0 pointer-events-none z-0"
+    />
+  );
+}
+
 export default function Layout({ children }: { children: ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [location, setLocation] = useLocation();
@@ -60,19 +171,19 @@ export default function Layout({ children }: { children: ReactNode }) {
   };
 
   return (
-    <div className="flex h-screen bg-background overflow-hidden">
+    <div className="flex h-screen bg-slate-950 text-foreground overflow-hidden">
       {/* Sidebar */}
       <motion.aside
         animate={{ width: collapsed ? 72 : 240 }}
         transition={{ duration: 0.25, ease: "easeInOut" }}
-        className="relative flex-shrink-0 flex flex-col bg-sidebar border-r border-sidebar-border z-20"
+        className="relative flex-shrink-0 flex flex-col bg-slate-950/45 backdrop-blur-xl border-r border-white/5 z-20"
         data-testid="sidebar"
       >
         {/* Logo */}
-        <div className="flex items-center h-16 px-4 border-b border-sidebar-border overflow-hidden">
+        <div className="flex items-center h-16 px-4 border-b border-white/5 overflow-hidden">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <ShieldAlert className="w-4 h-4 text-primary-foreground" />
+            <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/25 flex items-center justify-center">
+              <ShieldAlert className="w-4 h-4 text-cyan-400 animate-pulse" />
             </div>
             <AnimatePresence>
               {!collapsed && (
@@ -86,7 +197,7 @@ export default function Layout({ children }: { children: ReactNode }) {
                   <span className="font-bold text-sm text-foreground tracking-tight whitespace-nowrap">
                     VisionBuild
                   </span>
-                  <p className="text-[10px] text-muted-foreground whitespace-nowrap">Defect Detection</p>
+                  <p className="text-[10px] text-slate-400 whitespace-nowrap font-mono">Defect Telemetry</p>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -94,27 +205,27 @@ export default function Layout({ children }: { children: ReactNode }) {
         </div>
 
         {/* Nav Items */}
-        <nav className="flex-1 py-4 space-y-1 px-2">
+        <nav className="flex-1 py-4 space-y-1.5 px-2">
           {navItems.map(({ href, label, icon: Icon }) => {
             const isActive = location === href || (href !== "/" && location.startsWith(href));
             return (
               <Link key={href} href={href}>
                 <motion.div
                   whileHover={{ x: collapsed ? 0 : 2 }}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-150 group relative ${
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-150 group relative border ${
                     isActive
-                      ? "bg-primary/10 text-primary"
-                      : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                      ? "bg-cyan-500/10 text-cyan-400 border-cyan-500/20"
+                      : "text-slate-400 border-transparent hover:bg-white/5 hover:text-white"
                   }`}
                   data-testid={`nav-${label.toLowerCase()}`}
                 >
                   {isActive && (
                     <motion.div
                       layoutId="activeNav"
-                      className="absolute left-0 top-0 bottom-0 w-0.5 rounded-full bg-primary"
+                      className="absolute left-0 top-0 bottom-0 w-0.5 rounded-full bg-cyan-400"
                     />
                   )}
-                  <Icon className={`w-5 h-5 flex-shrink-0 ${isActive ? "text-primary" : ""}`} />
+                  <Icon className={`w-5 h-5 flex-shrink-0 ${isActive ? "text-cyan-400" : ""}`} />
                   <AnimatePresence>
                     {!collapsed && (
                       <motion.span
@@ -129,7 +240,7 @@ export default function Layout({ children }: { children: ReactNode }) {
                     )}
                   </AnimatePresence>
                   {collapsed && (
-                    <div className="absolute left-full ml-3 px-2 py-1 bg-popover border border-border rounded-md text-xs text-popover-foreground shadow-lg opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap transition-opacity z-50">
+                    <div className="absolute left-full ml-3 px-2 py-1 bg-slate-900 border border-white/10 rounded-md text-xs text-white shadow-lg opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap transition-opacity z-50">
                       {label}
                     </div>
                   )}
@@ -143,7 +254,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         <div className="px-2 pb-4">
           <button
             onClick={() => setCollapsed(!collapsed)}
-            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-muted-foreground hover:bg-sidebar-accent hover:text-foreground transition-colors text-sm"
+            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-slate-400 hover:bg-white/5 hover:text-white transition-colors text-sm"
             data-testid="sidebar-collapse-toggle"
           >
             {collapsed ? <ChevronRight className="w-4 h-4" /> : <><ChevronLeft className="w-4 h-4" /><span>Collapse</span></>}
@@ -152,9 +263,9 @@ export default function Layout({ children }: { children: ReactNode }) {
       </motion.aside>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative z-10">
         {/* Top Navbar */}
-        <header className="flex-shrink-0 flex items-center justify-between h-16 px-6 bg-background border-b border-border z-10">
+        <header className="flex-shrink-0 flex items-center justify-between h-16 px-6 bg-slate-950/25 backdrop-blur-md border-b border-white/5 z-10">
           <div className="flex items-center gap-4">
             <h1 className="text-base font-semibold text-foreground tracking-tight" data-testid="page-title">
               {pageTitle}
@@ -163,9 +274,9 @@ export default function Layout({ children }: { children: ReactNode }) {
 
           <div className="flex items-center gap-3">
             {/* Notifications */}
-            <Button variant="ghost" size="icon" className="relative" data-testid="notifications-bell">
+            <Button variant="ghost" size="icon" className="relative text-slate-400 hover:text-white hover:bg-white/5" data-testid="notifications-bell">
               <Bell className="w-4 h-4" />
-              <Badge className="absolute -top-1 -right-1 w-4 h-4 p-0 flex items-center justify-center text-[9px] bg-destructive text-destructive-foreground border-0">
+              <Badge className="absolute -top-1 -right-1 w-4 h-4 p-0 flex items-center justify-center text-[9px] bg-red-500 text-white border-0">
                 3
               </Badge>
             </Button>
@@ -174,39 +285,39 @@ export default function Layout({ children }: { children: ReactNode }) {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
-                  className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-accent transition-colors"
+                  className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-white/5 transition-colors"
                   data-testid="user-profile-trigger"
                 >
                   <Avatar className="w-7 h-7">
-                    <AvatarFallback className="bg-primary/20 text-primary text-xs font-semibold">
+                    <AvatarFallback className="bg-cyan-500/20 text-cyan-400 text-xs font-semibold">
                       {initials}
                     </AvatarFallback>
                   </Avatar>
                   <div className="hidden sm:block text-left">
                     <p className="text-xs font-semibold text-foreground leading-none">{user?.name || "User"}</p>
-                    <p className="text-[10px] text-muted-foreground leading-none mt-0.5">{user?.role || "Structural Engineer"}</p>
+                    <p className="text-[10px] text-slate-400 leading-none mt-0.5">{user?.role || "Structural Engineer"}</p>
                   </div>
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56" data-testid="user-dropdown">
+              <DropdownMenuContent align="end" className="w-56 glass-card" data-testid="user-dropdown">
                 <DropdownMenuLabel>
                   <div>
                     <p className="font-semibold text-sm">{user?.name || "User"}</p>
-                    <p className="text-xs text-muted-foreground font-normal">{user?.email}</p>
-                    <p className="text-xs text-primary font-normal mt-0.5">{user?.role || "Structural Engineer"}</p>
+                    <p className="text-xs text-slate-400 font-normal">{user?.email}</p>
+                    <p className="text-xs text-cyan-400 font-normal mt-0.5">{user?.role || "Structural Engineer"}</p>
                   </div>
                 </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild data-testid="account-settings-link">
+                <DropdownMenuSeparator className="bg-white/5" />
+                <DropdownMenuItem asChild data-testid="account-settings-link" className="hover:bg-white/5">
                   <Link href="/settings">
                     <User className="w-4 h-4 mr-2" />
                     Account Settings
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuSeparator />
+                <DropdownMenuSeparator className="bg-white/5" />
                 <DropdownMenuItem
                   onClick={handleLogout}
-                  className="text-destructive focus:text-destructive"
+                  className="text-red-400 focus:text-red-400 hover:bg-red-500/10 focus:bg-red-500/10"
                   data-testid="logout-button"
                 >
                   <LogOut className="w-4 h-4 mr-2" />
@@ -218,13 +329,14 @@ export default function Layout({ children }: { children: ReactNode }) {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto bg-background">
+        <main className="flex-1 overflow-y-auto bg-slate-950 neon-app-bg blueprint-grid relative z-10">
+          <FloatingParticles />
           <motion.div
             key={location}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.2 }}
-            className="h-full"
+            className="h-full relative z-10"
           >
             {children}
           </motion.div>

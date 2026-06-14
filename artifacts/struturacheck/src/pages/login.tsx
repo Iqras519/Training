@@ -160,69 +160,95 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex dark">
-      {/* Left Panel */}
-      <div className="hidden lg:flex flex-1 relative bg-[hsl(220,15%,8%)] overflow-hidden items-center justify-center p-12">
-        <MeshBackground />
-        <div className="relative z-10 text-center max-w-md">
+    <div className="min-h-screen flex dark relative overflow-hidden bg-[#06070a]">
+      {/* Left Panel - Video Hero */}
+      <div className="hidden lg:flex flex-col justify-between w-[55%] relative p-12 overflow-hidden border-r border-white/5">
+        {/* Autoplay Loop Video Background */}
+        <video
+          autoPlay
+          muted
+          loop
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover z-0"
+        >
+          <source src="/login-bg.mp4" type="video/mp4" />
+        </video>
+        
+        {/* Subtle dark overlay for contrast */}
+        <div className="absolute inset-0 bg-slate-950/20 z-10" />
+
+        {/* Top Header Branding */}
+        <div className="relative z-20 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/25 flex items-center justify-center backdrop-blur-md">
+            <ShieldCheck className="w-5 h-5 text-cyan-400 animate-pulse" />
+          </div>
+          <span className="font-extrabold text-lg text-white tracking-widest uppercase font-mono">VisionBuild</span>
+        </div>
+
+        {/* Middle Branding Pitch */}
+        <div className="relative z-20 my-auto max-w-lg space-y-4">
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
-            <div className="flex items-center justify-center mb-6">
-              <div className="w-16 h-16 rounded-2xl bg-primary/20 border border-primary/30 flex items-center justify-center">
-                <ShieldCheck className="w-8 h-8 text-primary" />
-              </div>
-            </div>
-            <h1 className="text-4xl font-bold text-white mb-4 tracking-tight">
-              VisionBuild
+            <h1 className="text-4xl font-extrabold text-white tracking-tight leading-tight">
+              Enterprise Defect Monitoring
             </h1>
-            <p className="text-lg text-[hsl(215,20%,65%)] mb-8 leading-relaxed">
-              AI-powered structural defect detection for engineers who demand precision.
+            <p className="text-base text-slate-200 leading-relaxed font-medium mt-2">
+              AI-Powered Structural Defect Detection & Infrastructure Monitoring
             </p>
-            <div className="grid grid-cols-3 gap-4 text-center">
-              {[
-                { value: "99.2%", label: "Detection Accuracy" },
-                { value: "< 500ms", label: "Analysis Speed" },
-                { value: "50K+", label: "Images Analyzed" },
-              ].map(({ value, label }) => (
-                <motion.div
-                  key={label}
-                  className="bg-white/5 border border-white/10 rounded-xl p-3"
-                  whileHover={{ scale: 1.03, borderColor: "rgba(6,182,212,0.4)" }}
-                  transition={{ duration: 0.15 }}
-                >
-                  <div className="text-xl font-bold text-primary">{value}</div>
-                  <div className="text-xs text-[hsl(215,20%,55%)] mt-1">{label}</div>
-                </motion.div>
-              ))}
-            </div>
           </motion.div>
+        </div>
+
+        {/* Bottom Floating Stats */}
+        <div className="relative z-20 grid grid-cols-3 gap-4 text-center mt-auto w-full">
+          {[
+            { value: "99.2%", label: "Detection Accuracy" },
+            { value: "< 500ms", label: "Analysis Speed" },
+            { value: "50K+", label: "Images Analyzed" },
+          ].map(({ value, label }, index) => (
+            <motion.div
+              key={label}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.25 + index * 0.1 }}
+              className="backdrop-blur-md bg-slate-950/40 border border-white/10 rounded-xl p-4 shadow-[0_8px_32px_rgba(0,0,0,0.37)]"
+              whileHover={{ scale: 1.03, borderColor: "rgba(6, 182, 212, 0.3)", boxShadow: "0 0 15px rgba(6, 182, 212, 0.15)" }}
+            >
+              <div className="text-xl font-bold text-cyan-400 font-mono tracking-tight">{value}</div>
+              <div className="text-[10px] text-slate-300 font-semibold uppercase tracking-wider mt-1">{label}</div>
+            </motion.div>
+          ))}
         </div>
       </div>
 
-      {/* Right Panel */}
-      <div className="flex-1 lg:max-w-[480px] flex items-center justify-center p-8 bg-[hsl(220,15%,10%)]">
-        <div className="w-full max-w-sm">
+      {/* Right Panel - Auth Card */}
+      <div className="flex-1 flex items-center justify-center p-6 sm:p-12 relative blueprint-grid z-20 bg-[#06070a]">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.96 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.4 }}
+          className="w-full max-w-md backdrop-blur-xl bg-slate-900/35 border border-white/5 rounded-2xl p-8 shadow-[0_20px_50px_rgba(0,0,0,0.55),0_0_30px_rgba(6,182,212,0.03)] relative"
+        >
           {/* Logo for mobile */}
-          <div className="lg:hidden flex items-center gap-2 mb-8">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <ShieldCheck className="w-4 h-4 text-primary-foreground" />
+          <div className="lg:hidden flex items-center gap-2.5 mb-8">
+            <div className="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center">
+              <ShieldCheck className="w-4.5 h-4.5 text-cyan-400" />
             </div>
-            <span className="font-bold text-white">VisionBuild</span>
+            <span className="font-bold text-white tracking-widest uppercase font-mono text-sm">VisionBuild</span>
           </div>
 
           {/* Tab Toggle */}
-          <div className="flex gap-1 p-1 bg-[hsl(220,15%,15%)] rounded-xl mb-8">
+          <div className="flex gap-1 p-1 bg-slate-950/65 border border-white/5 rounded-xl mb-6">
             {["Sign In", "Create Account"].map((tab, i) => (
               <button
                 key={tab}
                 onClick={() => setIsLogin(i === 0)}
-                className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+                className={`flex-1 py-1.5 text-[10px] font-bold rounded-lg font-mono uppercase tracking-widest transition-all duration-300 ${
                   isLogin === (i === 0)
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "text-[hsl(215,20%,60%)] hover:text-white"
+                    ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-[0_0_12px_rgba(6,182,212,0.1)]"
+                    : "text-slate-400 hover:text-white border border-transparent"
                 }`}
                 data-testid={i === 0 ? "tab-signin" : "tab-register"}
               >
@@ -235,55 +261,60 @@ export default function LoginPage() {
             {isLogin ? (
               <motion.div
                 key="login"
-                initial={{ opacity: 0, x: -20 }}
+                initial={{ opacity: 0, x: -12 }}
                 animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                transition={{ duration: 0.2 }}
+                exit={{ opacity: 0, x: 12 }}
+                transition={{ duration: 0.25 }}
               >
-                <h2 className="text-2xl font-bold text-white mb-1">Welcome back</h2>
-                <p className="text-sm text-[hsl(215,20%,55%)] mb-6">Sign in to your account</p>
+                <div className="mb-6">
+                  <h2 className="text-xl font-bold text-white tracking-tight">Welcome back</h2>
+                  <p className="text-xs text-slate-400 font-mono mt-1">// Sign in to structural telemetry panel</p>
+                </div>
+
                 <form onSubmit={loginForm.handleSubmit(onLogin)} className="space-y-4">
                   <div className="space-y-1.5">
-                    <Label htmlFor="email" className="text-[hsl(215,20%,70%)] text-xs font-medium uppercase tracking-wide">Email</Label>
+                    <Label htmlFor="email" className="text-slate-400 text-[10px] font-bold uppercase tracking-wider font-mono">Email Address</Label>
                     <Input
                       id="email"
                       type="email"
                       placeholder="engineer@company.com"
-                      className="bg-[hsl(220,15%,15%)] border-[hsl(220,15%,25%)] text-white placeholder:text-[hsl(215,20%,40%)] focus:border-primary focus:ring-1 focus:ring-primary"
+                      className="bg-slate-950/60 border-white/10 text-white placeholder:text-slate-500 rounded-lg h-9 focus:border-cyan-500/40 focus:ring-1 focus:ring-cyan-500/30 transition-all duration-300"
                       data-testid="input-email"
                       {...loginForm.register("email")}
                     />
                     {loginForm.formState.errors.email && (
-                      <p className="text-xs text-destructive">{loginForm.formState.errors.email.message}</p>
+                      <p className="text-xs text-red-400">{loginForm.formState.errors.email.message}</p>
                     )}
                   </div>
+
                   <div className="space-y-1.5">
-                    <Label htmlFor="password" className="text-[hsl(215,20%,70%)] text-xs font-medium uppercase tracking-wide">Password</Label>
+                    <Label htmlFor="password" className="text-slate-400 text-[10px] font-bold uppercase tracking-wider font-mono">Password</Label>
                     <div className="relative">
                       <Input
                         id="password"
                         type={showPassword ? "text" : "password"}
                         placeholder="••••••••"
-                        className="bg-[hsl(220,15%,15%)] border-[hsl(220,15%,25%)] text-white placeholder:text-[hsl(215,20%,40%)] focus:border-primary focus:ring-1 focus:ring-primary pr-10"
+                        className="bg-slate-950/60 border-white/10 text-white placeholder:text-slate-500 rounded-lg h-9 focus:border-cyan-500/40 focus:ring-1 focus:ring-cyan-500/30 transition-all duration-300 pr-10"
                         data-testid="input-password"
                         {...loginForm.register("password")}
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-[hsl(215,20%,50%)] hover:text-white transition-colors"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors"
                         data-testid="toggle-password"
                       >
                         {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
                     </div>
                     {loginForm.formState.errors.password && (
-                      <p className="text-xs text-destructive">{loginForm.formState.errors.password.message}</p>
+                      <p className="text-xs text-red-400">{loginForm.formState.errors.password.message}</p>
                     )}
                   </div>
+
                   <Button
                     type="submit"
-                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
+                    className="w-full bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-slate-950 font-bold border-0 h-10 shadow-[0_0_15px_rgba(6,182,212,0.2)] hover:shadow-[0_0_20px_rgba(6,182,212,0.35)] transition-all duration-300 rounded-lg mt-2"
                     disabled={loginMutation.isPending}
                     data-testid="button-signin"
                   >
@@ -294,10 +325,10 @@ export default function LoginPage() {
 
                 <div className="relative my-6">
                   <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-[hsl(220,15%,22%)]" />
+                    <div className="w-full border-t border-white/5" />
                   </div>
-                  <div className="relative flex justify-center text-xs">
-                    <span className="px-3 bg-[hsl(220,15%,10%)] text-[hsl(215,20%,45%)]">or continue with</span>
+                  <div className="relative flex justify-center text-[10px] uppercase font-mono">
+                    <span className="px-3 bg-[#06070a]/80 backdrop-blur-md text-slate-500">or continue with</span>
                   </div>
                 </div>
 
@@ -308,11 +339,12 @@ export default function LoginPage() {
                   ].map(({ icon, label }) => (
                     <button
                       key={label}
-                      className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg border border-[hsl(220,15%,25%)] text-[hsl(215,20%,70%)] hover:border-[hsl(220,15%,35%)] hover:text-white transition-all text-sm font-medium"
+                      type="button"
+                      className="flex items-center justify-center gap-2 py-2 px-4 rounded-lg border border-white/5 bg-slate-950/40 text-slate-300 hover:border-white/15 hover:text-white hover:bg-slate-950/60 transition-all text-xs font-semibold"
                       data-testid={`oauth-${label.toLowerCase()}`}
                     >
                       {typeof icon === "string" ? (
-                        <span className="font-bold text-base">{icon}</span>
+                        <span className="font-bold text-sm text-cyan-400 font-mono">{icon}</span>
                       ) : icon}
                       {label}
                     </button>
@@ -322,73 +354,80 @@ export default function LoginPage() {
             ) : (
               <motion.div
                 key="register"
-                initial={{ opacity: 0, x: 20 }}
+                initial={{ opacity: 0, x: 12 }}
                 animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.2 }}
+                exit={{ opacity: 0, x: -12 }}
+                transition={{ duration: 0.25 }}
               >
-                <h2 className="text-2xl font-bold text-white mb-1">Create account</h2>
-                <p className="text-sm text-[hsl(215,20%,55%)] mb-6">Join the VisionBuild platform</p>
-                <form onSubmit={registerForm.handleSubmit(onRegister)} className="space-y-4">
+                <div className="mb-6">
+                  <h2 className="text-xl font-bold text-white tracking-tight">Create account</h2>
+                  <p className="text-xs text-slate-400 font-mono mt-1">// Join the VisionBuild telemetry network</p>
+                </div>
+
+                <form onSubmit={registerForm.handleSubmit(onRegister)} className="space-y-3.5">
                   <div className="space-y-1.5">
-                    <Label className="text-[hsl(215,20%,70%)] text-xs font-medium uppercase tracking-wide">Full Name</Label>
+                    <Label className="text-slate-400 text-[10px] font-bold uppercase tracking-wider font-mono">Full Name</Label>
                     <Input
                       placeholder="Jane Smith"
-                      className="bg-[hsl(220,15%,15%)] border-[hsl(220,15%,25%)] text-white placeholder:text-[hsl(215,20%,40%)] focus:border-primary"
+                      className="bg-slate-950/60 border-white/10 text-white placeholder:text-slate-500 rounded-lg h-9 focus:border-cyan-500/40 focus:ring-1 focus:ring-cyan-500/30 transition-all duration-300"
                       data-testid="input-name"
                       {...registerForm.register("name")}
                     />
                     {registerForm.formState.errors.name && (
-                      <p className="text-xs text-destructive">{registerForm.formState.errors.name.message}</p>
+                      <p className="text-xs text-red-400">{registerForm.formState.errors.name.message}</p>
                     )}
                   </div>
+
                   <div className="space-y-1.5">
-                    <Label className="text-[hsl(215,20%,70%)] text-xs font-medium uppercase tracking-wide">Email</Label>
+                    <Label className="text-slate-400 text-[10px] font-bold uppercase tracking-wider font-mono">Email Address</Label>
                     <Input
                       type="email"
                       placeholder="engineer@company.com"
-                      className="bg-[hsl(220,15%,15%)] border-[hsl(220,15%,25%)] text-white placeholder:text-[hsl(215,20%,40%)] focus:border-primary"
+                      className="bg-slate-950/60 border-white/10 text-white placeholder:text-slate-500 rounded-lg h-9 focus:border-cyan-500/40 focus:ring-1 focus:ring-cyan-500/30 transition-all duration-300"
                       data-testid="input-register-email"
                       {...registerForm.register("email")}
                     />
                     {registerForm.formState.errors.email && (
-                      <p className="text-xs text-destructive">{registerForm.formState.errors.email.message}</p>
+                      <p className="text-xs text-red-400">{registerForm.formState.errors.email.message}</p>
                     )}
                   </div>
+
                   <div className="space-y-1.5">
-                    <Label className="text-[hsl(215,20%,70%)] text-xs font-medium uppercase tracking-wide">Role</Label>
+                    <Label className="text-slate-400 text-[10px] font-bold uppercase tracking-wider font-mono">Role Profile</Label>
                     <Input
                       placeholder="Structural Engineer"
-                      className="bg-[hsl(220,15%,15%)] border-[hsl(220,15%,25%)] text-white placeholder:text-[hsl(215,20%,40%)] focus:border-primary"
+                      className="bg-slate-950/60 border-white/10 text-white placeholder:text-slate-500 rounded-lg h-9 focus:border-cyan-500/40 focus:ring-1 focus:ring-cyan-500/30 transition-all duration-300"
                       data-testid="input-role"
                       {...registerForm.register("role")}
                     />
                   </div>
+
                   <div className="space-y-1.5">
-                    <Label className="text-[hsl(215,20%,70%)] text-xs font-medium uppercase tracking-wide">Password</Label>
+                    <Label className="text-slate-400 text-[10px] font-bold uppercase tracking-wider font-mono">Password</Label>
                     <div className="relative">
                       <Input
                         type={showPassword ? "text" : "password"}
                         placeholder="Min. 6 characters"
-                        className="bg-[hsl(220,15%,15%)] border-[hsl(220,15%,25%)] text-white placeholder:text-[hsl(215,20%,40%)] focus:border-primary pr-10"
+                        className="bg-slate-950/60 border-white/10 text-white placeholder:text-slate-500 rounded-lg h-9 focus:border-cyan-500/40 focus:ring-1 focus:ring-cyan-500/30 transition-all duration-300 pr-10"
                         data-testid="input-register-password"
                         {...registerForm.register("password")}
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-[hsl(215,20%,50%)] hover:text-white"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"
                       >
                         {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
                     </div>
                     {registerForm.formState.errors.password && (
-                      <p className="text-xs text-destructive">{registerForm.formState.errors.password.message}</p>
+                      <p className="text-xs text-red-400">{registerForm.formState.errors.password.message}</p>
                     )}
                   </div>
+
                   <Button
                     type="submit"
-                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
+                    className="w-full bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-slate-950 font-bold border-0 h-10 shadow-[0_0_15px_rgba(6,182,212,0.2)] hover:shadow-[0_0_20px_rgba(6,182,212,0.35)] transition-all duration-300 rounded-lg mt-3"
                     disabled={registerMutation.isPending}
                     data-testid="button-register"
                   >
@@ -399,7 +438,7 @@ export default function LoginPage() {
               </motion.div>
             )}
           </AnimatePresence>
-        </div>
+        </motion.div>
       </div>
     </div>
   );
